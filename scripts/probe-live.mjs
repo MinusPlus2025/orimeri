@@ -1,0 +1,7 @@
+import env from '@next/env';import fs from 'node:fs';env.loadEnvConfig(process.cwd());
+const headers={'X-Api-Key':process.env.QLOO_API_KEY};
+for(const [name,path,params] of [
+ ['tags','/v2/tags',{'filter.query':'cafe','filter.parents.types':'urn:entity:place',take:'6'}],
+ ['places','/v2/insights',{'filter.type':'urn:entity:place','filter.location':'POINT(139.7005 35.6595)','filter.location.radius':'5000','signal.interests.entities':'1B088E28-0668-4670-A97B-87865A1FCBCF','feature.explainability':'true',take:'3'}]
+]){try{const u=new URL(path,'https://hackathon.api.qloo.com');u.search=new URLSearchParams(params);const r=await fetch(u,{headers,signal:AbortSignal.timeout(25000)});const b=await r.json();fs.writeFileSync(`/tmp/orimeri-${name}.json`,JSON.stringify(b));const list=Array.isArray(b.results)?b.results:b.results?.entities??b.results?.tags;console.log(name,r.status,JSON.stringify({keys:Object.keys(b),first:list?.[0]??b,query:b.query},null,2).slice(0,6500));}catch(e){console.log(name,e.name,e.message)}}
+try{const r=await fetch('https://api.deepseek.com/chat/completions',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${process.env.DEEPSEEK_API_KEY}`},body:JSON.stringify({model:'deepseek-chat',messages:[{role:'user',content:'Reply only with OK'}],max_tokens:10}),signal:AbortSignal.timeout(20000)});console.log('language',r.status);}catch(e){console.log('language',e.name)}

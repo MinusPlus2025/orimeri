@@ -1,0 +1,3 @@
+import {NextRequest,NextResponse} from 'next/server';import {z} from 'zod';import {translateText} from '@/lib/deepseek';import {guard,readBody,errorResponse} from '@/lib/http';import {ServiceError} from '@/lib/qloo';
+export const runtime='nodejs';export const maxDuration=30;
+export async function POST(req:NextRequest){try{guard(req);const b=z.object({texts:z.array(z.string().max(1000)).min(1).max(10),locale:z.enum(['en','zh','ja'])}).safeParse(await readBody(req));if(!b.success)throw new ServiceError('INVALID_INPUT','Invalid translation request.',400);return NextResponse.json({ok:true,texts:await translateText(b.data.texts,b.data.locale,req.signal)},{headers:{'Cache-Control':'no-store'}});}catch(e){return errorResponse(e);}}

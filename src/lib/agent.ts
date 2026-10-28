@@ -1,378 +1,51 @@
-/**
- * The Elsewhere agent — orchestration layer.
- *
- * Pipeline:
- *   1. parseIntent (DeepSeek)         free text → structured intent
- *   2. resolveTasteObjects            names → Qloo entity ids (search)
- *   3. resolvePlaceTags               intent → verified Qloo tag URNs
- *   4. recommendPlaces (Qloo insights) taste + intent + STRICT Tokyo filter
- *   5. buildEvidence                  explainability → traceable reasons
- *
- * Honesty contract:
- *   - We never fabricate a place, image, or fact.
- *   - If Qloo returns nothing, we return an empty result with a notice.
- *   - If an API key is missing, we return a clear "not configured" state
- *     rather than a mock.
- */
-
-import type {
-  DiscoveryResult,
-  Intent,
-  IntentMode,
-  ParsedIntent,
-  PlaceRecommendation,
-  TasteObject,
-  TasteObjectKind,
-} from "./types";
-import { parseIntent } from "./deepseek";
-import {
-  getPlaceInsights,
-  searchEntities,
-  searchTags,
-  entityDescription,
-  entityImageUrl,
-  QlooError,
-} from "./qloo";
-import { INTENT_PROFILES, toIntentMode } from "./intent";
-
-const CITY = process.env.ELSEWHERE_CITY ?? "Tokyo";
-const CITY_COUNTRY_CODE = "JP";
-
-/** Map a free-text type hint to a TasteObjectKind for /search `types`. */
-const KIND_TO_URN: Record<TasteObjectKind, string> = {
-  artist: "urn:entity:artist",
-  director: "urn:entity:director",
-  brand: "urn:entity:brand",
-  author: "urn:entity:author",
-  book: "urn:entity:book",
-  movie: "urn:entity:movie",
-  tv_show: "urn:entity:tv_show",
-  podcast: "urn:entity:podcast",
-  person: "urn:entity:person",
-  other: "urn:entity:person",
-};
-
-function guessKind(label: string): TasteObjectKind {
-  const s = label.toLowerCase();
-  if (s.includes("brand") || s.includes("aesop")) return "brand";
-  if (s.includes("director") || s.includes("wong")) return "director";
-  if (s.includes("author") || s.includes("writer")) return "author";
-  if (s.includes("book")) return "book";
-  if (s.includes("movie") || s.includes("film")) return "movie";
-  if (s.includes("show") || s.includes("tv")) return "tv_show";
-  if (s.includes("podcast")) return "podcast";
-  return "artist";
+import 'server-only';
+import {randomUUID} from 'node:crypto';
+import {parseIntent} from './deepseek';
+import {qloo,entities,searchTags,searchEntities,ServiceError,type Entity} from './qloo';
+import {AREAS,coordinates,distanceM,safeUrl} from './geo';
+import type {DiscoverInput,Investigation,Place,Taste} from './types';
+export async function resolveTaste(query:string,signal?:AbortSignal):Promise<Taste[]>{
+ return (await searchEntities(query,signal)).filter(e=>e.entity_id&&e.name).map(e=>({entityId:e.entity_id!,name:e.name!,type:e.types?.[0]??e.type??'Cultural entity',query,image:safeUrl((e.properties?.image as {url?:string}|undefined)?.url??(e.properties?.images as {url?:string}[]|undefined)?.[0]?.url)}));
 }
-
-/* ------------------------------------------------------------------ */
-/* Configuration check                                                 */
-/* ------------------------------------------------------------------ */
-
-export interface ConfigStatus {
-  qloo: boolean;
-  deepseek: boolean;
-}
-
-export function configStatus(): ConfigStatus {
-  return {
-    qloo: Boolean(process.env.QLOO_API_KEY),
-    deepseek: Boolean(process.env.DEEPSEEK_API_KEY),
-  };
-}
-
-/* ------------------------------------------------------------------ */
-/* Step 1: intent parsing                                              */
-/* ------------------------------------------------------------------ */
-
-export async function resolveIntent(freeText: string): Promise<ParsedIntent> {
-  // If DeepSeek is not configured, fall back to keyword heuristics (still
-  // honest — we never claim the LLM parsed it).
-  if (!process.env.DEEPSEEK_API_KEY) {
-    const mode = toIntentMode(freeText);
-    return {
-      mode,
-      tags: { include: INTENT_PROFILES[mode].include, exclude: INTENT_PROFILES[mode].exclude },
-      location: CITY,
-      summary: `Intent classified as "${mode}" via local heuristics (DeepSeek not configured).`,
-    };
+export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<Investigation>{
+ const area=AREAS.find(a=>a.id===input.areaId)!;
+ const steps:Investigation['steps']=[],notices:string[]=[];
+ // Revalidate client-selected IDs against server results; no fabricated or stale IDs enter signals.
+ const canonical:Taste[]=[];for(const t of input.taste){const candidates=await resolveTaste(t.query,signal);const match=candidates.find(c=>c.entityId===t.entityId);if(!match)throw new ServiceError('TASTE_STALE',`Please resolve “${t.name}” again. Its selected identity could not be verified.`,422);canonical.push(match);}
+ input={...input,taste:canonical};
+ steps.push({label:'Taste held constant',detail:`${input.taste.length} selected Qloo identities verified. No preferences inferred from this moment.`});
+ const plan=await parseIntent(input.moment,`${area.name}, ${area.city}`,input.challenge?.text,signal,input.locale);
+ if(plan.locationMismatch)throw new ServiceError('AREA_MISMATCH','Your moment names a different city. Change the search area before investigating.',422);
+ if(input.challenge?.condition==='conditionAtmosphere')throw new ServiceError('CONDITION_UNVERIFIABLE','Qloo cannot verify current atmosphere, availability or opening hours. The original proposal was kept.',422);
+ steps.push({label:'Moment interpreted',detail:plan.summary});
+ async function resolveTags(words:string[],required:boolean){
+  const out:{id:string;name:string}[]=[];
+  for(const word of words){const all=await searchTags(word,signal);const exact=all.find(t=>t.name.toLowerCase().replace(/[_-]/g,' ')===word.toLowerCase().replace(/[_-]/g,' '));
+   if(exact)out.push(exact);else if(all.length===1)out.push(all[0]);else if(required)throw new ServiceError('FILTER_UNRESOLVED',`The category “${word}” could not be resolved unambiguously. Try a concrete category such as café, gallery or book store.`,422);else notices.push(`No unambiguous Qloo tag for “${word}”; this category was not applied.`);
+  }return out;
+ }
+ const included=await resolveTags(plan.categories,true),excluded=await resolveTags(plan.avoid,true);
+ steps.push({label:'Constraints resolved',detail:`Categories: ${included.map(t=>t.name).join(', ')||'open'}. Excluded: ${excluded.map(t=>t.name).join(', ')||'none'}. Other needs remain unverified.`});
+ const excludedIds=[...new Set([...input.excludeIds,...(input.challenge?[input.challenge.targetId]:[])])];
+ const params:Record<string,string|undefined>={'filter.type':'urn:entity:place','filter.location':`POINT(${area.lon} ${area.lat})`,'filter.location.radius':String(input.radiusM),'signal.interests.entities':input.taste.map(t=>t.entityId).join(','),'filter.tags':included.map(t=>t.id).join(','),'operator.filter.tags':'union','filter.exclude.tags':excluded.map(t=>t.id).join(','),'filter.exclude.entities':excludedIds.join(','),'feature.explainability':'true',take:'20'};
+ const raw=entities(await qloo('/v2/insights',params,signal));
+ let rejected=0;const seen=new Set<string>();
+ const places:Place[]=[];
+ for(const e of raw){const c=coordinates(e as Record<string,unknown>);if(e.properties?.is_closed===true||!e.entity_id||!e.name||!c||distanceM(area,c)>input.radiusM||excludedIds.includes(e.entity_id)){rejected++;continue;}if(seen.has(e.entity_id))continue;seen.add(e.entity_id);
+  const p=e.properties??{},dist=distanceM(area,c);
+  const tags=e.tags??[];
+  const tagIds=tags.map(t=>t.id);if(included.length&&!included.some(t=>tagIds.includes(t.id))||excluded.some(t=>tagIds.includes(t.id))){rejected++;continue;}
+  const ev:Place['evidence']=[{source:'Qloo',label:'Cultural signal',detail:`Returned by Qloo Insights using ${input.taste.map(t=>t.name).join(', ')}. This is a collective recommendation, not proof of a causal link to one taste.`},{source:'Geometry',label:'Within your boundary',detail:`${(dist/1000).toFixed(2)} km straight-line from ${area.name}; verified against the ${input.radiusM/1000} km limit.`}];
+  if(tags.length)ev.push({source:'Qloo',label:'Listed categories',detail:[...included.filter(t=>tagIds.includes(t.id)).map(t=>t.name),...tags.filter(t=>t.id?.includes('genre:place')).map(t=>t.name||t.id)].filter((v,i,a)=>a.indexOf(v)===i).slice(0,6).join(' · ')});
+  const explain=e.query?.explainability;
+  if(explain&&typeof explain==='object'){
+   const contributions=(explain as Record<string,unknown>)['signal.interests.entities'];
+   if(Array.isArray(contributions))for(const v of contributions){const t=input.taste.find(t=>t.entityId===v.entity_id);if(t&&typeof v.score==='number'&&v.score>=0&&v.score<=1)ev.push({source:'Qloo',label:t.name,detail:`Qloo reports an input contribution of ${v.score.toFixed(2)} on its normalized 0–1 scale. This is not a probability that you will like the place.`});}
   }
-  try {
-    const parsed = await parseIntent(freeText);
-    // Always force the location to the fixed city, regardless of what the
-    // model might emit.
-    parsed.location = CITY;
-    return parsed;
-  } catch (e) {
-    const mode = toIntentMode(freeText);
-    return {
-      mode,
-      tags: { include: INTENT_PROFILES[mode].include, exclude: INTENT_PROFILES[mode].exclude },
-      location: CITY,
-      summary: `Intent classified as "${mode}" (DeepSeek unavailable: ${(e as Error).message}).`,
-    };
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/* Step 2: taste object resolution                                     */
-/* ------------------------------------------------------------------ */
-
-export async function resolveTasteObjects(
-  labels: string[],
-): Promise<TasteObject[]> {
-  const out: TasteObject[] = [];
-  for (const label of labels) {
-    const clean = label.trim();
-    if (!clean) continue;
-    const kind = guessKind(clean);
-    try {
-      const results = await searchEntities(clean, [KIND_TO_URN[kind]]);
-      const top = results[0];
-      if (top?.entity_id) {
-        out.push({
-          id: `taste-${out.length}`,
-          label: clean,
-          entityId: top.entity_id,
-          type: kind,
-          resolvedName: top.name ?? clean,
-          imageUrl: entityImageUrl(top),
-          status: "resolved",
-        });
-      } else {
-        out.push({
-          id: `taste-${out.length}`,
-          label: clean,
-          entityId: null,
-          type: kind,
-          resolvedName: null,
-          imageUrl: null,
-          status: "unresolved",
-        });
-      }
-    } catch {
-      out.push({
-        id: `taste-${out.length}`,
-        label: clean,
-        entityId: null,
-        type: kind,
-        resolvedName: null,
-        imageUrl: null,
-        status: "unresolved",
-      });
-    }
-  }
-  return out;
-}
-
-/* ------------------------------------------------------------------ */
-/* Step 3: place tag resolution                                        */
-/* ------------------------------------------------------------------ */
-
-/** Resolve intent keywords to verified Qloo tag URNs. */
-async function resolvePlaceTags(
-  profile: { include: string[]; exclude: string[] },
-): Promise<{ include: string[]; exclude: string[] }> {
-  const resolve = async (keywords: string[]): Promise<string[]> => {
-    const found: string[] = [];
-    for (const kw of keywords) {
-      try {
-        const tags = await searchTags(kw);
-        for (const t of tags) {
-          const id = t.id ?? t.value;
-          if (id && id.includes(":place:")) {
-            found.push(id);
-            break; // first matching place tag per keyword
-          }
-        }
-      } catch {
-        // skip unresolved keyword
-      }
-    }
-    return found;
-  };
-
-  const include = await resolve(profile.include);
-  const exclude = await resolve(profile.exclude);
-  return { include, exclude };
-}
-
-/* ------------------------------------------------------------------ */
-/* Step 4 + 5: place recommendation + evidence                         */
-/* ------------------------------------------------------------------ */
-
-function buildEvidence(
-  place: { name?: string; entity_id?: string },
-  explainability: Record<string, unknown>,
-  tasteObjects: TasteObject[],
-): PlaceRecommendation["evidence"] {
-  const evidence: PlaceRecommendation["evidence"] = [];
-  const eid = place.entity_id;
-  if (!eid) return evidence;
-
-  // Qloo's explainability is keyed by entity id; try several shapes.
-  const raw = explainability?.[eid] ?? explainability;
-  if (typeof raw === "object" && raw !== null) {
-    const contributions = (raw as Record<string, unknown>).contributions as
-      | Record<string, number>
-      | undefined;
-    if (contributions) {
-      for (const [sourceId, weight] of Object.entries(contributions)) {
-        const match = tasteObjects.find((t) => t.entityId === sourceId);
-        const label = match?.label ?? sourceId.slice(0, 8);
-        evidence.push({
-          source: label,
-          weight: typeof weight === "number" ? weight : 0,
-          note: `${label} pulled this place into range`,
-        });
-      }
-    }
-  }
-
-  // Fallback: if no structured explainability, attribute to the taste set
-  // collectively, but mark it as low-confidence (never fabricate weights).
-  if (evidence.length === 0 && tasteObjects.length > 0) {
-    evidence.push({
-      source: tasteObjects.map((t) => t.label).join(" · "),
-      weight: 0,
-      note: "Qloo surface signal (no per-entity explainability returned)",
-    });
-  }
-
-  return evidence.sort((a, b) => b.weight - a.weight).slice(0, 4);
-}
-
-export async function discover(
-  tasteLabels: string[],
-  intentMode: IntentMode,
-  previousResult: DiscoveryResult | null,
-): Promise<DiscoveryResult> {
-  const notices: string[] = [];
-  const cfg = configStatus();
-
-  if (!cfg.qloo) {
-    return {
-      taste: tasteLabels.map((label, i) => ({
-        id: `taste-${i}`,
-        label,
-        entityId: null,
-        type: null,
-        resolvedName: null,
-        imageUrl: null,
-        status: "unresolved",
-      })),
-      intent: { mode: intentMode, label: INTENT_PROFILES[intentMode].label, description: "" },
-      places: [],
-      deltaNote: null,
-      notices: ["Qloo API key is not configured. Add QLOO_API_KEY to .env.local."],
-      live: false,
-    };
-  }
-
-  const profile = INTENT_PROFILES[intentMode];
-  const intent: Intent = {
-    mode: intentMode,
-    label: profile.label,
-    description: "",
-  };
-
-  // 1. Resolve taste objects.
-  const taste = await resolveTasteObjects(tasteLabels);
-  const unresolved = taste.filter((t) => t.status === "unresolved");
-  if (unresolved.length > 0) {
-    notices.push(
-      `Could not resolve: ${unresolved.map((t) => t.label).join(", ")}. These were skipped.`,
-    );
-  }
-  const entityIds = taste
-    .filter((t) => t.entityId)
-    .map((t) => t.entityId as string);
-
-  // 2. Resolve intent → tags.
-  const tags = await resolvePlaceTags({ include: profile.include, exclude: profile.exclude });
-
-  // 3. Recommend places with STRICT Tokyo filter.
-  let places: PlaceRecommendation[] = [];
-  try {
-    const res = await getPlaceInsights({
-      filterType: "urn:entity:place",
-      locationQuery: CITY,
-      countryCode: CITY_COUNTRY_CODE,
-      includeTags: tags.include.length > 0 ? tags.include : undefined,
-      excludeTags: tags.exclude.length > 0 ? tags.exclude : undefined,
-      interestEntities: entityIds.length > 0 ? entityIds : undefined,
-      explainability: true,
-      take: 12,
-    });
-
-    // Strict filter: drop any place whose geocode country is not Japan.
-    const geoFiltered = res.entities.filter((e) => {
-      const geo = e.properties?.geocode as
-        | { country_code?: string; country?: string; metro?: string }
-        | undefined;
-      if (!geo) return true; // no geo info → keep (can't prove it's wrong)
-      const cc = geo.country_code ?? geo.country;
-      return !cc || cc === "JP" || cc === "Japan";
-    });
-
-    places = geoFiltered.slice(0, 3).map((e) => ({
-      entityId: e.entity_id ?? "",
-      name: e.name ?? "Unnamed place",
-      category: categoryOf(e),
-      address: addressOf(e),
-      imageUrl: entityImageUrl(e),
-      description: entityDescription(e),
-      evidence: buildEvidence(e, res.explainability, taste),
-      affinity: affinityOf(e),
-    }));
-  } catch (e) {
-    if (e instanceof QlooError) {
-      notices.push(`Qloo request failed: ${e.message}`);
-    } else {
-      notices.push(`Qloo request failed: ${(e as Error).message}`);
-    }
-  }
-
-  // 4. Delta note vs previous intent.
-  let deltaNote: string | null = null;
-  if (previousResult && previousResult.intent.mode !== intentMode) {
-    deltaNote = buildDeltaNote(previousResult.intent.mode, intentMode, places);
-  }
-
-  return {
-    taste,
-    intent,
-    places,
-    deltaNote,
-    notices,
-    live: true,
-  };
-}
-
-/* ------------------------------------------------------------------ */
-/* helpers                                                             */
-/* ------------------------------------------------------------------ */
-
-function categoryOf(e: { tags?: { name?: string; value?: string; id?: string }[] }): string | null {
-  const t = e.tags?.find((t) => (t.value ?? t.id ?? "").includes(":place:"));
-  return t?.name ?? null;
-}
-
-function addressOf(e: { properties?: Record<string, unknown> }): string | null {
-  const a = e.properties?.address;
-  return typeof a === "string" && a ? a : null;
-}
-
-function affinityOf(e: { affinity?: number; properties?: Record<string, unknown> }): number | null {
-  if (typeof e.affinity === "number") return e.affinity;
-  const a = e.properties?.affinity;
-  return typeof a === "number" ? a : null;
-}
-
-function buildDeltaNote(
-  from: IntentMode,
-  to: IntentMode,
-  places: PlaceRecommendation[],
-): string {
-  const names = places.map((p) => p.name).join(", ");
-  return `Intent shifted from "${from}" to "${to}". Taste unchanged — the same cultural signals now surface ${names || "a different set of places"}.`;
+  const affinity=typeof e.query?.affinity==='number'?e.query.affinity:null;
+  places.push({language:input.locale??'en',interpretation:plan.summary,id:e.entity_id,name:e.name,address:typeof p.address==='string'?p.address:null,category:(p.primary_genre as {name?:string}|undefined)?.name??tags.find(t=>t.id?.includes('genre:place'))?.name??'Place',...c,distanceM:Math.round(dist),image:safeUrl((p.image as {url?:string}|undefined)?.url??(p.images as {url?:string}[]|undefined)?.[0]?.url),website:safeUrl(p.website),affinity,evidence:ev,unknowns:[...new Set([...plan.unknowns,'Current opening hours, availability and on-site atmosphere have not been checked.',...(!explain?['No per-taste attribution was returned.']:[])])]});
+ }
+ steps.push({label:'Qloo investigated',detail:`${raw.length} candidates received; ${rejected} rejected by identity, exclusion or coordinate checks. Boundary was not widened.`});
+ if(!places.length)notices.push('No verified places met this boundary and category combination. Edit the moment or explicitly widen the radius; no substitute places were invented.');
+ return {id:randomUUID(),at:new Date().toISOString(),input:input.moment,taste:input.taste,area,radiusM:input.radiusM,plan,places:places.slice(0,input.challenge?1:3),steps,notices,live:true};
 }

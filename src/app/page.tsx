@@ -1,380 +1,97 @@
-"use client";
-
-import { useCallback, useEffect, useRef, useState } from "react";
-import "./instrument.css";
-import type { DiscoveryResult, IntentMode, TasteObject } from "@/lib/types";
-
-interface ApiResponse {
-  ok: boolean;
-  live: boolean;
-  configured?: { qloo: boolean; deepseek: boolean };
-  message?: string;
-  intent?: { mode: IntentMode; label: string };
-  parsedIntent?: { summary: string } | null;
-  taste?: TasteObject[];
-  places?: DiscoveryResult["places"];
-  deltaNote?: string | null;
-  notices?: string[];
-}
-
-const INTENT_OPTIONS: { mode: IntentMode; label: string }[] = [
-  { mode: "social", label: "More social" },
-  { mode: "quiet", label: "More quiet" },
-  { mode: "experimental", label: "More experimental" },
-];
-
-const SAMPLE_TASTE = ["Brian Eno", "Wong Kar-wai", "Aesop"];
-
-export default function Home() {
-  const [tasteLabels, setTasteLabels] = useState<string[]>(SAMPLE_TASTE);
-  const [newTaste, setNewTaste] = useState("");
-  const [intent, setIntent] = useState<IntentMode>("social");
-  const [freeText, setFreeText] = useState(
-    "I want to be around people, somewhere lively but still with real character.",
-  );
-
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<ApiResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [config, setConfig] = useState<{ qloo: boolean; deepseek: boolean } | null>(null);
-
-  const prevIntentRef = useRef<IntentMode | null>(null);
-  const hasRunRef = useRef(false);
-
-  // Fetch config status on mount.
-  useEffect(() => {
-    fetch("/api/discover")
-      .then((r) => r.json())
-      .then((d: ApiResponse & { configured?: { qloo: boolean; deepseek: boolean } }) => {
-        setConfig(d.configured ?? { qloo: false, deepseek: false });
-      })
-      .catch(() => setConfig({ qloo: false, deepseek: false }));
-  }, []);
-
-  const runDiscovery = useCallback(
-    async (targetIntent: IntentMode, previousIntent: IntentMode | null) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/discover", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            taste: tasteLabels,
-            intent: targetIntent,
-            freeText,
-            previousIntent,
-          }),
-        });
-        const data = (await res.json()) as ApiResponse;
-        setResult(data);
-      } catch (e) {
-        setError((e as Error).message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [tasteLabels, freeText],
-  );
-
-  const handleDiscover = () => {
-    prevIntentRef.current = result?.intent?.mode ?? null;
-    runDiscovery(intent, prevIntentRef.current);
-  };
-
-  const handleIntentChange = (mode: IntentMode) => {
-    if (mode === intent) return;
-    const prev = intent;
-    setIntent(mode);
-    // Preserve taste, change intent, re-run.
-    runDiscovery(mode, prev);
-  };
-
-  const addTaste = () => {
-    const v = newTaste.trim();
-    if (v && !tasteLabels.includes(v)) {
-      setTasteLabels((s) => [...s, v]);
-    }
-    setNewTaste("");
-  };
-
-  const removeTaste = (label: string) => {
-    setTasteLabels((s) => s.filter((x) => x !== label));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") addTaste();
-  };
-
-  const qlooLive = config?.qloo ?? false;
-  const deepseekLive = config?.deepseek ?? false;
-
-  return (
-    <div className="shell">
-      {/* Top bar */}
-      <header className="topbar">
-        <div className="brand">
-          <span className="brandMark">Elsewhere</span>
-          <span className="brandTagline">a taste instrument</span>
-        </div>
-        <div className="topMeta">
-          <span className="cityBadge">
-            <span className="cityDot" /> Tokyo
-          </span>
-          <span className={`statusPill ${qlooLive ? "statusLive" : "statusOff"}`}>
-            {qlooLive ? "Qloo live" : "Qloo not configured"}
-          </span>
-        </div>
-      </header>
-
-      {/* Manifesto */}
-      <div className="manifesto">
-        <h1>
-          Your taste stays <span className="dim">the same.</span>
-          <br />
-          Your intent <span className="dim">changes.</span>
-        </h1>
-        <p className="manifestoSub">
-          A cultural instrument for discovering places in Tokyo. Tell it what you
-          <em> love</em> — that part never moves — then turn the dial on how you feel
-          <em> right now</em>, and watch the city recompose itself.
-        </p>
-      </div>
-
-      {/* Workspace */}
-      <div className="workspace">
-        {/* Taste panel (fixed) */}
-        <aside className="panel tastePanel">
-          <div className="panelHeader">
-            <span className="panelTitle">
-              <span className="idx">01</span> Taste
-            </span>
-            <span className="resultCount">{tasteLabels.length} objects</span>
-          </div>
-          <div className="panelBody">
-            {tasteLabels.length === 0 ? (
-              <p className="tasteHint">No taste objects yet. Add what you love below.</p>
-            ) : (
-              tasteLabels.map((label) => (
-                <div className="tasteRow" key={label}>
-                  <div className="tasteThumb">
-                    {label.slice(0, 2).toUpperCase()}
-                  </div>
-                  <div className="tasteInfo">
-                    <div className="tasteName">{label}</div>
-                    <div className="tasteKind">cultural object</div>
-                  </div>
-                  <button
-                    className="tasteRemove"
-                    onClick={() => removeTaste(label)}
-                    aria-label={`Remove ${label}`}
-                    title="Remove"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))
-            )}
-            <div className="tasteAdd">
-              <input
-                value={newTaste}
-                onChange={(e) => setNewTaste(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Add an artist, director, brand…"
-              />
-              <button onClick={addTaste}>Add</button>
-            </div>
-            <p className="tasteHint">
-              These are the things you love — they persist across every intent.
-            </p>
-          </div>
-        </aside>
-
-        {/* Main column */}
-        <main>
-          {/* Intent control */}
-          <div className="intentBlock">
-            <div className="intentLabel">
-              <span className="idx">02</span> Intent
-            </div>
-            <div className="intentControls">
-              {INTENT_OPTIONS.map((o) => (
-                <button
-                  key={o.mode}
-                  className="intentBtn"
-                  data-active={intent === o.mode}
-                  data-mode={o.mode}
-                  onClick={() => handleIntentChange(o.mode)}
-                >
-                  <span className="dot" />
-                  {o.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Query */}
-          <div className="queryBlock">
-            <textarea
-              className="queryInput"
-              value={freeText}
-              onChange={(e) => setFreeText(e.target.value)}
-              placeholder="Describe where you are and what you need right now…"
-              rows={2}
-            />
-            <div className="queryActions">
-              <button
-                className="primaryBtn"
-                onClick={handleDiscover}
-                disabled={loading || !qlooLive || tasteLabels.length === 0}
-              >
-                {loading ? "Discovering…" : "Discover"}
-              </button>
-              {!qlooLive && (
-                <span style={{ fontSize: 12, color: "var(--red)" }}>
-                  Configure QLOO_API_KEY to enable discovery.
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Results */}
-          <div className="panel">
-            <div className="resultHeader">
-              <span className="resultTitle">
-                <span className="idx">03</span> Discovery
-              </span>
-              {result?.places && (
-                <span className="resultCount">{result.places.length} places</span>
-              )}
-            </div>
-
-            {error && (
-              <div className="noticeBox">Something went wrong: {error}</div>
-            )}
-
-            {result?.deltaNote && (
-              <div className="deltaNote">
-                <strong>Taste unchanged · Intent changed.</strong> {result.deltaNote}
-              </div>
-            )}
-
-            {result?.parsedIntent?.summary && (
-              <div className="noticeBox">
-                <em>{result.parsedIntent.summary}</em>
-              </div>
-            )}
-
-            {result?.notices?.map((n, i) => (
-              <div className="noticeBox" key={i}>
-                {n}
-              </div>
-            ))}
-
-            {loading && !result && (
-              <div className="stateBox">
-                <span className="loading">
-                  <span className="spinner" /> Querying Qloo…
-                </span>
-              </div>
-            )}
-
-            {!loading && !result && qlooLive && (
-              <div className="stateBox">
-                <h3>Nothing discovered yet</h3>
-                <p>
-                  Set your taste, choose an intent, and press Discover. The
-                  instrument will query Qloo in real time.
-                </p>
-              </div>
-            )}
-
-            {!loading && !result && !qlooLive && (
-              <div className="stateBox">
-                <h3>Not configured</h3>
-                <p>
-                  The Qloo API key is not set. Add <code>QLOO_API_KEY</code> to{" "}
-                  <code>.env.local</code> and restart the server. Elsewhere never
-                  shows mock recommendations.
-                </p>
-              </div>
-            )}
-
-            {!loading && result && result.places && result.places.length === 0 && (
-              <div className="stateBox">
-                <h3>No places surfaced</h3>
-                <p>
-                  Qloo returned no places for this taste + intent in Tokyo. Try a
-                  different intent, or adjust your taste objects.
-                </p>
-              </div>
-            )}
-
-            {result?.places && result.places.length > 0 && (
-              <div className="placeList">
-                {result.places.map((p, i) => (
-                  <article className="placeItem" key={p.entityId}>
-                    <div className="placeMain">
-                      <div className="placeIndex">
-                        PLACE {String(i + 1).padStart(2, "0")}
-                      </div>
-                      <h2 className="placeName">{p.name}</h2>
-                      <div className="placeMeta">
-                        {p.category && (
-                          <span className="placeCategory">{p.category}</span>
-                        )}
-                        {p.address && <span className="placeAddress">{p.address}</span>}
-                      </div>
-                      {p.description && (
-                        <p className="placeDesc">{p.description}</p>
-                      )}
-                      {p.evidence && p.evidence.length > 0 && (
-                        <div className="evidence">
-                          <div className="evidenceLabel">Why — Qloo evidence</div>
-                          {p.evidence.map((ev, j) => (
-                            <div className="evidenceRow" key={j}>
-                              <span className="evidenceSource">{ev.source}</span>
-                              <span className="evidenceBar">
-                                <span
-                                  className="evidenceBarFill"
-                                  style={{
-                                    width: `${Math.max(
-                                      4,
-                                      Math.round(ev.weight * 100),
-                                    )}%`,
-                                  }}
-                                />
-                              </span>
-                              <span className="evidenceWeight">
-                                {ev.weight > 0 ? ev.weight.toFixed(2) : "—"}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    {p.imageUrl && (
-                      <div className="placeImage">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.imageUrl} alt={p.name} loading="lazy" />
-                      </div>
-                    )}
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Footer */}
-      <footer className="footer">
-        <span>Elsewhere — taste stays, intent changes.</span>
-        <span>
-          Powered by Qloo taste graph · {deepseekLive ? "DeepSeek intent" : "heuristic intent"} ·
-          Tokyo v0.1
-        </span>
-      </footer>
-    </div>
-  );
+'use client';
+import {useEffect,useRef,useState} from 'react';
+import dynamic from 'next/dynamic';
+import {ArrowUpRight,ArrowRight,Plus,X,Undo2,MapPin,Check,LoaderCircle,ChevronRight,RefreshCw,ArrowDown,Disc3,ShieldCheck,ExternalLink,AlertCircle,Menu,Pencil,Bookmark,Download,Trash2,Map as MapIcon,List,UserRound} from 'lucide-react';
+import {AREAS} from '@/lib/geo';
+import {cityNames,type Key} from '@/lib/i18n';
+import {useLanguage,LanguageSwitch} from '@/components/Language';
+import {Brand} from '@/components/Brand';
+import {SourceImage} from '@/components/SourceImage';
+import type {Taste,Investigation,Place} from '@/lib/types';
+const MapView=dynamic(()=>import('@/components/MapView'),{ssr:false});
+type Snapshot={result:Investigation;selected:string|null;label:string};
+type Saved={id:string;at:string;moment:string;taste:Taste[];areaId:string;radiusM:number};
+const CONDITIONS:Key[]=['conditionCategory','conditionDistance','conditionCulture','conditionAtmosphere'];
+export default function Home(){
+ const{t,locale}=useLanguage();
+ const[objectDetail,setObjectDetail]=useState<Taste|null>(null);
+ const[examples,setExamples]=useState<Taste[]>([]),[collectionOpen,setCollectionOpen]=useState(false),[composerOpen,setComposerOpen]=useState(true),[questionOpen,setQuestionOpen]=useState(false),[claim,setClaim]=useState(''),[translations,setTranslations]=useState<Record<string,string[]>>({}),[translating,setTranslating]=useState(false),[translationFailed,setTranslationFailed]=useState(false);
+ const[taste,setTaste]=useState<Taste[]>([]),[ready,setReady]=useState(false),[query,setQuery]=useState(''),[candidates,setCandidates]=useState<Taste[]>([]),[searching,setSearching]=useState(false),[tasteError,setTasteError]=useState<Key|null>(null),[editing,setEditing]=useState<string|null>(null);
+ const[moment,setMoment]=useState(''),[areaId,setAreaId]=useState('tokyo'),[radiusM,setRadius]=useState(5000),[result,setResult]=useState<Investigation|null>(null),[selected,setSelected]=useState<string|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState<Key|null>(null),[history,setHistory]=useState<Snapshot[]>([]),[challenge,setChallenge]=useState(''),[notice,setNotice]=useState<Key|null>(null),[railOpen,setRailOpen]=useState(false),[traceOpen,setTraceOpen]=useState(false),[condition,setCondition]=useState<Key>('conditionCategory'),[view,setView]=useState<'map'|'list'>('map'),[panel,setPanel]=useState<'explore'|'saved'|'privacy'>('explore'),[saved,setSaved]=useState<Saved[]>([]),[localRadius,setLocalRadius]=useState(2000);
+ const abort=useRef<AbortController|null>(null),requestId=useRef(0),inspector=useRef<HTMLElement|null>(null),lastLocal=useRef(false);
+ useEffect(()=>{try{const a=JSON.parse(localStorage.getItem('orimeri.taste.v1')||'[]');if(Array.isArray(a))setTaste(a.filter(validTaste).slice(0,6));const b=JSON.parse(localStorage.getItem('orimeri.saved.v1')||'[]');if(Array.isArray(b))setSaved(b.filter(s=>typeof s.id==='string'&&typeof s.moment==='string'&&Array.isArray(s.taste)&&s.taste.every(validTaste)&&AREAS.some(a=>a.id===s.areaId)&&[2000,5000,10000].includes(s.radiusM)).slice(0,20));}catch{}setReady(true);return()=>abort.current?.abort();},[]);
+ useEffect(()=>{if(ready)try{localStorage.setItem('orimeri.taste.v1',JSON.stringify(taste));localStorage.setItem('orimeri.saved.v1',JSON.stringify(saved));}catch{}},[taste,saved,ready]);
+ function validTaste(t:unknown):t is Taste{const x=t as Taste;return !!x&&typeof x.entityId==='string'&&typeof x.name==='string'&&typeof x.query==='string'&&typeof x.type==='string';}
+ const active=result?.places.find(p=>p.id===selected);
+ const chosenTaste=taste.filter(x=>x.enabled!==false);
+ useEffect(()=>{fetch('/api/examples').then(r=>r.json()).then(b=>{if(b.ok){setExamples(b.examples);setTaste(current=>current.map(x=>{const fresh=b.examples.find((e:Taste)=>e.entityId===x.entityId);return fresh?{...x,image:fresh.image,name:fresh.name,type:fresh.type}:x;}));}}).catch(()=>{});},[]);
+ const translationKey=active?`${active.id}:${active.interpretation}:${locale}`:'';
+ useEffect(()=>{if(!active||!active.language||active.language===locale||translations[translationKey]){setTranslating(false);setTranslationFailed(false);return;}const controller=new AbortController();setTranslating(true);setTranslationFailed(false);fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({locale,texts:[active.interpretation||result?.plan.summary||'',...active.unknowns.filter(u=>!u.startsWith('Current opening')&&!u.startsWith('No per-taste'))]}),signal:controller.signal}).then(r=>r.json()).then(b=>{if(b.ok)setTranslations(v=>({...v,[translationKey]:b.texts}));else setTranslationFailed(true);}).catch(e=>{if(e.name!=='AbortError')setTranslationFailed(true);}).finally(()=>{if(!controller.signal.aborted)setTranslating(false);});return()=>controller.abort();},[locale,active?.id,active?.interpretation,translationKey]);
+ const translated=translations[translationKey];
+ const shownInterpretation=translated?.[0]??active?.interpretation??result?.plan.summary;
+ const shownUnknowns=translated?.slice(1)??active?.unknowns.filter(u=>!u.startsWith('Current opening')&&!u.startsWith('No per-taste'))??[];
+ const stale=!!result&&(result.input!==moment||result.area.id!==areaId||result.radiusM!==radiusM||JSON.stringify(result.taste.map(t=>t.entityId))!==JSON.stringify(chosenTaste.map(t=>t.entityId)));
+ function code(b:{code?:string}):Key{return (['QLOO_NOT_CONFIGURED','QLOO_AUTH','QLOO_RATE_LIMIT','QLOO_REQUEST','QLOO_RESPONSE','QLOO_SCHEMA','UPSTREAM_TIMEOUT','LANGUAGE_NOT_CONFIGURED','LANGUAGE_TIMEOUT','LANGUAGE_UNAVAILABLE','LANGUAGE_FORMAT','AREA_MISMATCH','TASTE_STALE','FILTER_UNRESOLVED','RATE_LIMIT','INVALID_INPUT','INVALID_JSON','INPUT_TOO_LARGE','ORIGIN','CANCELLED','CONDITION_UNVERIFIABLE'].includes(b.code||'')?b.code as Key:'genericError');}
+ async function findTaste(value=query,example=false){if(searching||value.trim().length<2)return;setQuery(value);setSearching(true);setTasteError(null);setCandidates([]);try{const r=await fetch('/api/taste',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:value}),signal:AbortSignal.timeout(25000)});const b=await r.json();if(!r.ok||!b.ok){setTasteError(code(b));return;}if(example){const exact=b.candidates.find((c:Taste)=>c.name==='Brian Eno'&&c.type==='urn:entity:artist');if(exact){addTaste(exact);return;}}setCandidates(b.candidates);if(!b.candidates.length)setTasteError('noIdentity');}catch{setTasteError('UPSTREAM_TIMEOUT');}finally{setSearching(false);}}
+ function addTaste(x:Taste){if(taste.length>=6&&!editing){setTasteError('limit');return;}const rest=taste.filter(v=>v.entityId!==editing&&v.entityId!==x.entityId);setTaste([...rest,{...x,enabled:true}]);setCandidates([]);setQuery('');setEditing(null);setTasteError(null);}
+ function editTaste(x:Taste){setEditing(x.entityId);setQuery(x.query);setCandidates([]);document.getElementById('taste-query')?.focus();}
+ async function investigate(local=false,override?:Saved){
+  if(busy)return;const chosen=override?.taste??chosenTaste,input=override?.moment??moment,aid=override?.areaId??areaId,rad=override?.radiusM??radiusM;
+  if(!chosen.length){setRailOpen(true);setError('needTaste');return;}if(input.trim().length<3){setError('needMoment');return;}
+  const target=local?active:undefined;if(local&&(!target||challenge.trim().length<3))return;
+  const seq=++requestId.current;abort.current?.abort();abort.current=new AbortController();lastLocal.current=local;setBusy(true);setError(null);setNotice(null);setPanel('explore');
+  try{const r=await fetch('/api/discover',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taste:chosen,moment:input,areaId:aid,radiusM:local&&condition==='conditionDistance'?Math.min(localRadius,rad):rad,locale,excludeIds:local?result!.places.map(p=>p.id):[],...(target?{challenge:{targetId:target.id,text:challenge,condition}}:{})}),signal:abort.current.signal});const b=await r.json();if(seq!==requestId.current)return;if(!r.ok||!b.ok){setError(code(b));return;}const next=b.result as Investigation;
+   if(local&&target&&result){if(!next.places.length){setNotice('noReplacement');return;}setHistory(h=>[...h,{result,selected,label:target.name}].slice(-12));const replacement=next.places[0];setResult({...result,id:next.id,at:next.at,places:result.places.map(p=>p.id===target.id?replacement:p),steps:[...result.steps,{label:'Local question',detail:challenge},...next.steps],notices:next.notices});setSelected(replacement.id);setNotice('replaced');setChallenge('');setQuestionOpen(false);
+   }else{if(result)setHistory(h=>[...h,{result,selected,label:result.input}].slice(-12));setResult(next);setSelected(next.places[0]?.id??null);setChallenge('');setRailOpen(false);setCollectionOpen(false);setComposerOpen(false);}
+  }catch(e){if(seq===requestId.current&&!(e instanceof Error&&e.name==='AbortError'))setError('genericError');}finally{if(seq===requestId.current)setBusy(false);}
+ }
+ function undo(){const last=history.at(-1);if(!last)return;abort.current?.abort();requestId.current++;setBusy(false);setResult(last.result);setSelected(last.selected);setMoment(last.result.input);setAreaId(last.result.area.id);setRadius(last.result.radiusM);setHistory(h=>h.slice(0,-1));setError(null);setChallenge('');setNotice('restored');}
+ function choose(id:string){setSelected(id);setChallenge('');setQuestionOpen(false);if(window.innerWidth<900)setTimeout(()=>document.querySelector('.discovery-stage')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'}),50);}
+ function cancel(){abort.current?.abort();requestId.current++;setBusy(false);setNotice('cancelled');}
+ function save(){if(!result)return;const entry:Saved={id:crypto.randomUUID(),at:new Date().toISOString(),moment:result.input,taste:result.taste,areaId:result.area.id,radiusM:result.radiusM};setSaved([entry,...saved].slice(0,20));setNotice('savedNotice');}
+ function openSaved(s:Saved){setMoment(s.moment);setTaste(s.taste);setAreaId(s.areaId);setRadius(s.radiusM);setPanel('explore');investigate(false,s);}
+ function exportData(){const blob=new Blob([JSON.stringify({version:1,taste,saved,locale},null,2)],{type:'application/json'});const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download='orimeri-personal-data.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),500);setNotice('exportDone');}
+ function clear(){if(!window.confirm(t('clearConfirm')))return;abort.current?.abort();requestId.current++;setBusy(false);setTaste([]);setSaved([]);setResult(null);setHistory([]);setMoment('');setSelected(null);setNotice('clearDone');}
+ function typeName(v:string){const key=v.replace('urn:entity:','') as Key;return ['artist','person','movie','book','brand','tv_show','podcast'].includes(key)?t(key):v;}
+ const previous=history.at(-1)?.result;
+ const kept=result?.places.filter(p=>previous?.places.some(v=>v.id===p.id))??[],added=result?.places.filter(p=>!previous?.places.some(v=>v.id===p.id))??[],removed=previous?.places.filter(p=>!result?.places.some(v=>v.id===p.id))??[];
+ function ask(c:Key,detail=''){setCondition(c);setClaim(detail);setQuestionOpen(true);setChallenge('');setTimeout(()=>document.getElementById('challenge')?.focus(),80);}
+ function toggleTaste(x:Taste){if(taste.some(v=>v.entityId===x.entityId))setTaste(taste.map(v=>v.entityId===x.entityId?{...v,enabled:v.enabled===false}:v));else addTaste(x);}
+ const collection=[...taste,...examples.filter(e=>!taste.some(x=>x.entityId===e.entityId))];
+ return <div className="living-app">
+  <a className="skip" href="#moment">{t('home')}</a>
+  <header className="living-header"><a href="/" className="brand" aria-label="ORIMERI"><Brand/></a><span className="living-slogan">{t('slogan')}</span><LanguageSwitch/><a href="/login" className="icon-button" aria-label={t('login')}><UserRound size={18}/></a></header>
+  <main className="living-main">
+   <nav className="living-nav"><button className={panel==='explore'?'active':''} onClick={()=>setPanel('explore')}>{t('home')}</button><button onClick={()=>{setPanel('explore');setCollectionOpen(v=>!v);}}>{t('taste')} <span data-testid="taste-count">{chosenTaste.length}/6</span></button><button className={panel==='saved'?'active':''} onClick={()=>setPanel('saved')}>{t('saved')} <span>{saved.length}</span></button><button className={panel==='privacy'?'active':''} onClick={()=>setPanel('privacy')}>{t('privacy')}</button></nav>
+   <div role="status" className={notice?'notice':'sr-only'}>{notice?t(notice):''}</div>
+   {panel==='saved'&&<section className="personal-panel"><h1>{t('saved')}</h1><p>{t('savedNote')}</p>{!saved.length&&<p className="empty-personal">{t('savedEmpty')}</p>}{saved.map(s=><article key={s.id} className="saved-row"><div><h2>{s.moment}</h2><p>{cityNames[locale][s.areaId]} · {s.radiusM/1000} km · {s.taste.map(x=>x.name).join(', ')}</p></div><button className="quiet-button" disabled={busy} onClick={()=>openSaved(s)}>{t('open')}<ArrowRight size={14}/></button><button className="icon-button" aria-label={`${t('delete')} ${s.moment}`} onClick={()=>setSaved(saved.filter(x=>x.id!==s.id))}><Trash2 size={16}/></button></article>)}</section>}
+   {panel==='privacy'&&<section className="personal-panel"><h1>{t('privacy')}</h1><p>{t('privacyText')}</p><div className="privacy-actions"><button className="secondary" onClick={exportData}><Download size={15}/>{t('export')}</button><button className="secondary" onClick={clear}><Trash2 size={15}/>{t('clear')}</button></div><p>{t('cloudUnavailable')}</p></section>}
+   <div hidden={panel!=='explore'}>
+    <div className={result?'continued-workspace':'entry-workspace'}><section className={`culture-collection ${result&&!collectionOpen?'compact':''}`} aria-label={t('collection')}>
+     <div className="collection-heading"><div><h2>{t('collection')}</h2>{!result&&<p>{t('cultureTypes')}</p>}</div><button className="quiet-button" onClick={()=>setCollectionOpen(!collectionOpen)}><Pencil size={14}/>{t(collectionOpen?'done':'manage')}</button></div>
+     <div className="culture-objects">{(result&&!collectionOpen?taste:collection).map(x=>{const current=taste.find(v=>v.entityId===x.entityId),enabled=!!current&&current.enabled!==false;return <div className={`culture-object ${enabled?'selected':''}`} key={x.entityId}><button className="culture-select" disabled={busy} aria-label={`${t(enabled?'deselect':'select')} ${x.name}`} aria-pressed={enabled} onClick={()=>toggleTaste(x)}><div className="culture-cover"><SourceImage src={x.image} alt={x.name} fallback={t('noImage')}/><span className="culture-check">{enabled?<Check size={15}/>:<Plus size={15}/>}</span></div><strong>{x.name}</strong><small>{typeName(x.type)}</small></button><button className="object-details" aria-label={`${t('details')} ${x.name}`} onClick={()=>setObjectDetail(x)}>{t('details')}</button>{collectionOpen&&current&&<div className="object-tools"><button aria-label={`${t('edit')} ${x.name}`} onClick={()=>{editTaste(x);setCollectionOpen(true);}}><Pencil size={13}/></button><button aria-label={`${t('remove')} ${x.name}`} onClick={()=>setTaste(taste.filter(v=>v.entityId!==x.entityId))}><X size={14}/></button>{x.image&&<a href={x.image} target="_blank" rel="noreferrer" aria-label={`${t('source')} ${x.name}`}><ExternalLink size={12}/></a>}</div>}</div>})}<button className="collection-add" onClick={()=>{setCollectionOpen(true);setTimeout(()=>document.getElementById('taste-query')?.focus(),30);}}><Plus size={20}/><span>{t('addTaste')}</span></button></div>
+     {objectDetail&&<section className="culture-detail" aria-label={t('details')}><div><strong>{objectDetail.name}</strong><p>{typeName(objectDetail.type)} · Qloo</p><code>{objectDetail.entityId}</code><p>{t('identityNote')}</p>{objectDetail.image&&<a href={objectDetail.image} target="_blank" rel="noreferrer">{t('imageSource')}<ExternalLink size={13}/></a>}</div><button className="icon-button" aria-label={t('close')} onClick={()=>setObjectDetail(null)}><X size={17}/></button></section>}{(!result||collectionOpen)&&<div className="collection-editor"><form className="taste-search" onSubmit={e=>{e.preventDefault();findTaste();}}><label htmlFor="taste-query">{editing?t('edit'):t('addTaste')}</label><div className="search-line"><input id="taste-query" placeholder={t('tastePlaceholder')} value={query} maxLength={100} disabled={busy||searching} onChange={e=>setQuery(e.target.value)}/><button className="icon-button" aria-label={t('searchTaste')} disabled={query.trim().length<2||busy||searching}>{searching?<LoaderCircle className="spin" size={17}/>:<Plus size={18}/>}</button></div>{editing&&<button className="text-button" type="button" onClick={()=>{setEditing(null);setQuery('');setCandidates([]);}}>{t('cancel')}</button>}</form>{!chosenTaste.length&&<button className="example-action" data-testid="use-example" disabled={searching||busy} onClick={()=>findTaste('Brian Eno',true)}>{t('useExample')}<ArrowRight size={15}/></button>}<small>{t('imageSource')} · {t('imageRights')}</small></div>}
+     {!!candidates.length&&<div className="candidate-list visual-candidates"><p>{t('chooseIdentity')}</p>{candidates.map(c=><button key={c.entityId} onClick={()=>addTaste(c)}><SourceImage src={c.image} alt={c.name} fallback={t('noImage')}/><span><strong>{c.name}</strong><small>{typeName(c.type)}</small></span><span>{t('confirm')}</span></button>)}</div>}{tasteError&&<p className="inline-error" role="alert">{t(tasteError)}</p>}
+    </section>
+    {result&&!composerOpen&&<button className="moment-summary" onClick={()=>setComposerOpen(true)}><span>{moment}</span><small>{cityNames[locale][areaId]} · {radiusM/1000} km</small><Pencil size={16}/></button>}
+    <form hidden={!!result&&!composerOpen} className="moment-composer living-composer" onSubmit={e=>{e.preventDefault();investigate();}}><label htmlFor="moment">{t('momentLabel')}</label><textarea id="moment" placeholder={t('momentPlaceholder')} value={moment} maxLength={1000} disabled={busy} onChange={e=>setMoment(e.target.value)} rows={2}/><div className="composer-bottom"><div className="boundaries"><MapPin size={15}/><label className="sr-only" htmlFor="area">{t('area')}</label><select id="area" value={areaId} disabled={busy} onChange={e=>setAreaId(e.target.value)}>{AREAS.map(a=><option key={a.id} value={a.id}>{cityNames[locale][a.id]} · {a.name}</option>)}</select><label className="sr-only" htmlFor="radius">{t('radius')}</label><select id="radius" value={radiusM} disabled={busy} onChange={e=>setRadius(Number(e.target.value))}>{[2000,5000,10000].map(r=><option key={r} value={r}>{r/1000} km</option>)}</select></div><button className="primary" type="submit" data-testid="explore" disabled={busy||!ready}>{busy?<LoaderCircle className="spin" size={16}/>:<ArrowRight size={16}/>}<span>{busy?t('investigating'):t('explore')}</span></button></div></form>
+    {!result&&!busy&&<div className="moment-starters"><span>{t('starters')}</span>{(['starterCafe','starterArt'] as Key[]).map(k=><button key={k} onClick={()=>setMoment(t(k))}>{t(k)}<ArrowUpRight size={12}/></button>)}</div>}
+    </div>{error&&<div className="error-banner" role="alert"><AlertCircle size={18}/><div><strong>{t('paused')}</strong><p>{t(error)}</p>{!['needTaste','needMoment','CONDITION_UNVERIFIABLE'].includes(error)&&<button className="text-button" disabled={busy} onClick={()=>investigate(lastLocal.current)}>{t('retry')}<RefreshCw size={13}/></button>}</div><button className="icon-button" aria-label={t('dismiss')} onClick={()=>setError(null)}><X size={16}/></button></div>}
+    {stale&&<div className="stale-note">{t('stale')} <button className="text-button" onClick={()=>setComposerOpen(true)}>{t('changeMoment')}</button></div>}
+    {busy&&<div className="busy-strip" role="status"><LoaderCircle className="spin" size={18}/><div><strong>{t('investigating')}</strong><p>{t('working')}</p></div><button className="quiet-button" onClick={cancel}>{t('cancel')}</button></div>}
+    {result&&<>
+     <div className="discovery-tools"><span>{t('currentPlace')}</span><div><button className="quiet-button" disabled={busy} onClick={save}><Bookmark size={15}/>{t('save')}</button><button className="quiet-button" data-testid="undo" disabled={!history.length||busy} onClick={undo}><Undo2 size={16}/>{t('undo')}</button></div></div>
+     {previous&&<div className="change-strip" aria-label={t('changes')}><span>{t('changes')}</span><span>{t('kept')} {kept.length}</span><span className="added">{t('added')} {added.length}</span><span>{t('removed')} {removed.length}</span><small>{removed.map(p=>p.name).join(' · ')} · {t('keepTaste')}</small></div>}
+     {active?<section className="discovery-stage" ref={inspector} aria-label={t('selected')}>
+      <div className="place-experience"><div className="place-photograph" key={active.id}><SourceImage src={active.image} alt={active.name} fallback={t('noImage')}/><div className="photograph-caption"><h1>{active.name}</h1><p>{active.category} · {(active.distanceM/1000).toFixed(1)} km</p></div>{active.image&&<a className="image-credit" href={active.image} target="_blank" rel="noreferrer">Qloo<ExternalLink size={11}/></a>}</div><div className="place-context"><p>{active.address||t('addressMissing')}</p><div className="place-links"><a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(active.name+' '+(active.address||result.area.city))}`} target="_blank" rel="noreferrer">{t('checkMaps')}<ExternalLink size={13}/></a>{active.website&&<a href={active.website} target="_blank" rel="noreferrer">{t('website')}<ExternalLink size={13}/></a>}</div></div></div>
+      <aside className="nearby-experiences"><h2>{t('nearby')}</h2><div className="proposal-index">{result.places.map((p,i)=><button key={p.id} data-place-id={p.id} className={selected===p.id?'current':''} aria-pressed={selected===p.id} onClick={()=>choose(p.id)}><SourceImage src={p.image} alt={p.name} fallback={t('noImage')}/><span><strong>{p.name}</strong><small>{p.category}</small><small>{(p.distanceM/1000).toFixed(1)} km{previous&&' · '+t(added.some(x=>x.id===p.id)?'added':'kept')}</small></span><ChevronRight size={15}/></button>)}</div><div className="field-heading"><span>{t('showMap')}</span><div className="view-toggle"><button aria-pressed={view==='map'} onClick={()=>setView('map')}><MapIcon size={13}/>{t('map')}</button><button aria-pressed={view==='list'} onClick={()=>setView('list')}><List size={13}/>{t('list')}</button></div></div>{view==='map'&&<MapView result={result} selected={selected} onSelect={choose}/>}<p className="distance-note">{result.area.name} · {result.radiusM/1000} km · {t('straightLine')}</p></aside>
+      <div className="discovery-understanding"><div className="cultural-rationale"><h2>{t('whyProposed')}</h2><p>{t('culturalDetail')}</p><p>{t('matched')}: {active.evidence.find(e=>e.label==='Listed categories')?.detail??active.category}</p><div className="linked-tastes">{result.taste.map(x=><button key={x.entityId} onClick={()=>{setCollectionOpen(true);document.querySelector('.culture-collection')?.scrollIntoView({block:'start'});}}><SourceImage src={x.image} alt={x.name} fallback={t('noImage')}/><span>{x.name}</span></button>)}</div><div className="fact-controls"><button onClick={()=>ask('conditionCategory',active.category)}><span>Qloo</span>{active.category}<ChevronRight size={13}/></button><button onClick={()=>ask('conditionDistance',`${(active.distanceM/1000).toFixed(2)} km`)}><span>{t('geometry')}</span>{(active.distanceM/1000).toFixed(2)} km<ChevronRight size={13}/></button><button onClick={()=>ask('conditionCulture',result.taste.map(x=>x.name).join(' · '))}>{t('culturalBasis')}<ChevronRight size={13}/></button></div><details className="source-evidence"><summary>{t('seeEvidence')}</summary><p>{t('originalContent')}</p><code>{active.id}</code>{active.evidence.filter(e=>e.source==='Qloo').map((e,i)=><p key={i}><strong>{e.label==='Cultural signal'?t('culturalBasis'):e.label==='Listed categories'?t('tags'):e.label}</strong> {e.label==='Cultural signal'?t('culturalDetail'):e.label==='Listed categories'?e.detail:`${t('contribution')}: ${e.detail.match(/of ([0-9.]+)/)?.[1]??'—'}. ${t('contributionNote')}`}</p>)}</details></div>
+      <div className="uncertainty-area"><h2>{t('unknown')}</h2><p>{t('unverifiedBasic')}</p>{translating&&<small>{t('translating')}</small>}{translationFailed&&<small>{t('originalLanguage')} · {active.language}</small>}<div className="uncertain-claims">{shownUnknowns.map((u,i)=><button key={i} onClick={()=>ask('conditionAtmosphere',u)}><AlertCircle size={14}/><span>{u}</span><ArrowUpRight size={14}/></button>)}</div><details className="request-reading"><summary>{t('requestUnderstanding')}</summary><p>{shownInterpretation}</p></details><button className="text-button" onClick={()=>ask('conditionCategory',active.category)}>{t('challenge')}<ArrowRight size={15}/></button></div></div>
+      {questionOpen&&<form className="contextual-question challenge-form" onSubmit={e=>{e.preventDefault();investigate(true);}}><div><h2>{t('challenge')}</h2><p>{active.name} · {claim||t(condition)}</p></div><button className="icon-button close-question" type="button" aria-label={t('close')} onClick={()=>setQuestionOpen(false)}><X size={18}/></button><div className="condition-options" role="group" aria-label={t('challenge')}>{CONDITIONS.map(c=><button type="button" key={c} aria-pressed={condition===c} onClick={()=>setCondition(c)}>{t(c)}</button>)}</div>{condition==='conditionDistance'&&<select aria-label={t('radius')} value={localRadius} onChange={e=>setLocalRadius(Number(e.target.value))}>{[2000,5000,10000].filter(r=>r<=radiusM).map(r=><option key={r} value={r}>{r/1000} km</option>)}</select>}<label className="sr-only" htmlFor="challenge">{t('challenge')}</label><textarea id="challenge" rows={2} maxLength={500} value={challenge} disabled={busy||stale} onChange={e=>setChallenge(e.target.value)} placeholder={t('questionPlaceholder')}/><div className="question-actions"><p>{t('challengeHelp')}</p><button className="secondary" data-testid="reinvestigate" disabled={busy||stale||challenge.trim().length<3}><RefreshCw size={14}/>{t('reinvestigate')}</button></div>{stale&&<small>{t('staleChallenge')}</small>}</form>}
+     </section>:<div className="empty-results"><h2>{t('emptyTitle')}</h2><p>{t('emptyHelp')}</p><button className="text-button" onClick={()=>setComposerOpen(true)}>{t('changeMoment')}</button></div>}
+     <section className="investigation-record"><button className="record-toggle" aria-expanded={traceOpen} onClick={()=>setTraceOpen(!traceOpen)}><span><Check size={14}/>{t('history')} · {new Date(result.at).toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'})}</span><span>{t('how')}<ArrowDown size={14}/></span></button>{traceOpen&&<ol>{result.steps.map((s,i)=><li key={i}><strong>{t(s.label.includes('Taste')?'traceTaste':s.label.includes('Moment')?'traceIntent':s.label.includes('Constraints')?'traceConstraints':s.label.includes('Qloo')?'traceQloo':'traceRefine')}</strong><p>{s.detail}</p></li>)}</ol>}</section>
+    </>}
+   </div>
+   <footer className="workspace-footer"><span>{t('powered')}</span></footer>
+  </main></div>
 }

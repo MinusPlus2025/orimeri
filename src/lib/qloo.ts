@@ -1,266 +1,39 @@
-/**
- * Qloo Hackathon API client.
- *
- * Endpoints used (verified against https://docs.qloo.com):
- *   - GET /search?query=…&types=…        resolve names → entity ids
- *   - GET /v2/tags?filter.query=…        search tag URNs
- *   - GET /v2/insights                    taste-driven recommendations
- *
- * Auth: `X-Api-Key` header (NOT Bearer).
- * Base URL: https://hackathon.api.qloo.com
- *
- * Behaviour guarantees (important for honesty of the product):
- *   - We retry 429 with exponential backoff; a 429 is NEVER treated as
- *     "no results".
- *   - We never fabricate a place or an image. If the API returns nothing,
- *     we return nothing.
- *   - `location` is applied as a *strict filter* (filter.geocode / locality),
- *     never merely as a soft preference signal.
- */
-
-const QLOO_BASE_URL = process.env.QLOO_API_BASE_URL ?? "https://hackathon.api.qloo.com";
-
-export class QlooError extends Error {
-  constructor(
-    message: string,
-    public readonly status?: number,
-  ) {
-    super(message);
-    this.name = "QlooError";
-  }
+import 'server-only';
+export class ServiceError extends Error {
+ constructor(public code:string,message:string,public status=502){super(message);this.name='ServiceError';}
 }
-
-function apiKey(): string {
-  const key = process.env.QLOO_API_KEY;
-  if (!key) {
-    throw new QlooError("QLOO_API_KEY is not configured", 401);
-  }
-  return key;
+export type Entity={entity_id?:string;name?:string;types?:string[];type?:string;properties?:Record<string,unknown>;location?:Record<string,unknown>;tags?:{id?:string;name?:string}[];query?:Record<string,unknown>};
+const cache=new Map<string,{at:number;data:Record<string,unknown>}>();
+export async function qloo(path:string,params:Record<string,string|undefined>,signal?:AbortSignal):Promise<Record<string,unknown>>{
+ const key=process.env.QLOO_API_KEY;
+ if(!key)throw new ServiceError('QLOO_NOT_CONFIGURED','Qloo is not configured. The operator needs to connect a valid API key.',503);
+ const url=new URL(path,process.env.QLOO_API_BASE_URL||'https://hackathon.api.qloo.com');
+ for(const [k,v] of Object.entries(params))if(v)url.searchParams.set(k,v);
+ const hit=cache.get(url.href);if(hit&&Date.now()-hit.at<60000)return hit.data;
+ for(let attempt=0;attempt<2;attempt++){
+  let res:Response;
+  try {res=await fetch(url,{headers:{'X-Api-Key':key,Accept:'application/json'},cache:'no-store',signal:AbortSignal.any([AbortSignal.timeout(15000),...(signal?[signal]:[])])});}
+  catch {throw new ServiceError(signal?.aborted?'CANCELLED':'UPSTREAM_TIMEOUT','The data service did not respond in time. Your space is unchanged; please retry.',504);}
+  if(res.status===429){if(attempt===0){await new Promise(r=>setTimeout(r,800));continue;}throw new ServiceError('QLOO_RATE_LIMIT','Qloo is temporarily rate limited. Wait a moment, then retry.',429);}
+  if(res.status===401||res.status===403)throw new ServiceError('QLOO_AUTH','Qloo rejected the server credentials. The operator needs to check the API key.',503);
+  if(!res.ok)throw new ServiceError('QLOO_REQUEST',`Qloo could not complete this request (HTTP ${res.status}). Your space is unchanged.`,502);
+  let data:Record<string,unknown>;try {data=await res.json();}catch{throw new ServiceError('QLOO_RESPONSE','Qloo returned an unreadable response. Please retry.');}
+  if(!data||typeof data!=='object'||data.success===false||data.error)throw new ServiceError('QLOO_RESPONSE','Qloo reported an unsuccessful response. Please retry.');
+  if(cache.size>300)cache.delete(cache.keys().next().value!);
+  cache.set(url.href,{at:Date.now(),data});return data;
+ }
+ throw new ServiceError('QLOO_REQUEST','Qloo is unavailable. Please retry.');
 }
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((r) => setTimeout(r, ms));
+export function entities(data:Record<string,unknown>):Entity[]{
+ const r=data.results;
+ const a=Array.isArray(r)?r:(r as Record<string,unknown>|undefined)?.entities??data.entities;
+ if(!Array.isArray(a))throw new ServiceError('QLOO_SCHEMA','Qloo returned an unexpected entity format. No recommendations were accepted.');
+ return a.filter(e=>e&&typeof e==='object');
 }
-
-interface FetchOptions {
-  /** Retry on 429 / transient network errors. */
-  retries?: number;
-  /** In-memory cache TTL in ms (server-side only). */
-  cacheTtlMs?: number;
-}
-
-/** In-memory server cache. Qloo forbids publishing response data, but allows
- *  private server-side caching. */
-const cache = new Map<string, { at: number; body: unknown }>();
-
-async function qlooFetch<T>(
-  path: string,
-  params: Record<string, string | undefined>,
-  opts: FetchOptions = {},
-): Promise<T> {
-  const retries = opts.retries ?? 3;
-  const cacheTtlMs = opts.cacheTtlMs ?? 0;
-
-  const qs = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== "") qs.set(k, v);
-  }
-  const url = `${QLOO_BASE_URL}${path}?${qs.toString()}`;
-
-  if (cacheTtlMs > 0) {
-    const hit = cache.get(url);
-    if (hit && Date.now() - hit.at < cacheTtlMs) {
-      return hit.body as T;
-    }
-  }
-
-  let lastErr: unknown;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      const res = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Api-Key": apiKey(),
-          Accept: "application/json",
-        },
-        cache: "no-store",
-      });
-
-      if (res.status === 429) {
-        // Never treat rate-limiting as "no results".
-        const backoff = 600 * Math.pow(2, attempt);
-        await sleep(backoff);
-        lastErr = new QlooError("rate limited", 429);
-        continue;
-      }
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new QlooError(
-          `Qloo ${path} failed: HTTP ${res.status} — ${text.slice(0, 300)}`,
-          res.status,
-        );
-      }
-
-      const body = (await res.json()) as T;
-      if (cacheTtlMs > 0) {
-        cache.set(url, { at: Date.now(), body });
-      }
-      return body;
-    } catch (e) {
-      lastErr = e;
-      if (e instanceof QlooError && e.status && e.status !== 429) {
-        throw e; // non-retryable
-      }
-      if (attempt < retries) {
-        await sleep(400 * Math.pow(2, attempt));
-      }
-    }
-  }
-
-  throw lastErr instanceof Error ? lastErr : new QlooError("unknown Qloo error");
-}
-
-/* ------------------------------------------------------------------ */
-/* Response shapes (minimal, defensive — the API returns rich objects) */
-/* ------------------------------------------------------------------ */
-
-interface QlooEntity {
-  name?: string;
-  entity_id?: string;
-  subtype?: string;
-  type?: string;
-  properties?: Record<string, unknown>;
-  tags?: { id?: string; name?: string }[];
-}
-
-interface SearchResponse {
-  success?: boolean;
-  results?: { entities?: QlooEntity[] };
-  entities?: QlooEntity[];
-}
-
-export interface QloTag {
-  id?: string;
-  name?: string;
-  value?: string;
-  tag_id?: string;
-  type?: string;
-}
-
-interface TagsResponse {
-  success?: boolean;
-  results?: { tags?: QloTag[] };
-  tags?: QloTag[];
-}
-
-interface InsightsResponse {
-  success?: boolean;
-  results?: {
-    entities?: QlooEntity[];
-    explainability?: Record<string, unknown>;
-  };
-  explainability?: Record<string, unknown>;
-}
-
-/* ------------------------------------------------------------------ */
-/* Public methods                                                      */
-/* ------------------------------------------------------------------ */
-
-/** Resolve a name to candidate Qloo entities of the given types. */
-export async function searchEntities(
-  query: string,
-  types: string[],
-): Promise<QlooEntity[]> {
-  const body = await qlooFetch<SearchResponse>(
-    "/search",
-    {
-      query,
-      types: types.join(","),
-      take: "10",
-    },
-    { retries: 3, cacheTtlMs: 60_000 },
-  );
-  const list = body.results?.entities ?? body.entities ?? [];
-  return list;
-}
-
-/** Search valid tag URNs by keyword. */
-export async function searchTags(query: string): Promise<QloTag[]> {
-  const body = await qlooFetch<TagsResponse>(
-    "/v2/tags",
-    { "filter.query": query, take: "20" },
-    { retries: 3, cacheTtlMs: 60_000 },
-  );
-  return body.results?.tags ?? body.tags ?? [];
-}
-
-export interface InsightsRequest {
-  filterType: string;
-  /** Strict location filter (natural-language, e.g. "Tokyo"). */
-  locationQuery?: string;
-  /** Strict country/city geocode filter (belt-and-suspenders for Tokyo). */
-  countryCode?: string;
-  filterTags?: string[];
-  includeTags?: string[];
-  excludeTags?: string[];
-  interestEntities?: string[];
-  interestTags?: string[];
-  /** Ask Qloo for per-entity explainability contributions. */
-  explainability?: boolean;
-  take?: number;
-}
-
-export interface InsightsResult {
-  entities: QlooEntity[];
-  explainability: Record<string, unknown>;
-  localities: unknown;
-}
-
-/** Run an insights request for places, strictly scoped to a location. */
-export async function getPlaceInsights(req: InsightsRequest): Promise<InsightsResult> {
-  const params: Record<string, string | undefined> = {
-    "filter.type": req.filterType,
-    // Strict location — the primary Tokyo guarantee.
-    "signal.location.query": req.locationQuery,
-    // Belt-and-suspenders: pin to Japan when a country code is available.
-    "filter.geocode.country_code": req.countryCode,
-    "filter.tags": req.filterTags?.join(","),
-    "filter.include.tags": req.includeTags?.join(","),
-    "filter.exclude.tags": req.excludeTags?.join(","),
-    "signal.interests.entities": req.interestEntities?.join(","),
-    "signal.interests.tags": req.interestTags?.join(","),
-    "feature.explainability": req.explainability ? "true" : undefined,
-    take: String(req.take ?? 12),
-  };
-
-  const body = await qlooFetch<InsightsResponse>(
-    "/v2/insights",
-    params,
-    { retries: 3, cacheTtlMs: 30_000 },
-  );
-
-  return {
-    entities: body.results?.entities ?? [],
-    explainability: body.results?.explainability ?? body.explainability ?? {},
-    localities: {},
-  };
-}
-
-/** Extract a displayable image url from a Qloo entity (never fabricate). */
-export function entityImageUrl(e: QlooEntity): string | null {
-  const p = e.properties;
-  if (!p) return null;
-  const img = p.image as { url?: string } | undefined;
-  return img?.url ?? null;
-}
-
-/** Extract a short description, if present. */
-export function entityDescription(e: QlooEntity): string | null {
-  const p = e.properties;
-  if (!p) return null;
-  if (typeof p.description === "string" && p.description) return p.description;
-  const short = p.short_descriptions as { value?: string }[] | undefined;
-  const first = short?.find((s) => s.value);
-  return first?.value ?? null;
+export async function searchEntities(query:string,signal?:AbortSignal){return entities(await qloo('/search',{query,take:'8',types:'urn:entity:artist,urn:entity:movie,urn:entity:book,urn:entity:brand,urn:entity:person,urn:entity:tv_show,urn:entity:podcast'},signal));}
+export async function searchTags(query:string,signal?:AbortSignal):Promise<{id:string;name:string}[]>{
+ const data=await qloo('/v2/tags',{'filter.query':query,'filter.parents.types':'urn:entity:place',take:'10'},signal);
+ const r=data.results;const list=Array.isArray(r)?r:(r as Record<string,unknown>|undefined)?.tags??data.tags;
+ if(!Array.isArray(list))throw new ServiceError('QLOO_SCHEMA','Qloo returned an unexpected tag format. No filters were guessed.');
+ return list.filter(t=>typeof t?.id==='string'&&typeof t?.name==='string').map(t=>({id:t.id,name:t.name}));
 }

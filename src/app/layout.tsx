@@ -1,20 +1,7 @@
-import type { Metadata } from "next";
-import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "Elsewhere — a taste instrument",
-  description:
-    "Your taste stays the same. Your intent changes. A cultural place-discovery instrument for Tokyo, powered by Qloo.",
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
-}
+import type { Metadata } from 'next';
+import '@fontsource-variable/dm-sans';
+import 'leaflet/dist/leaflet.css';
+import './globals.css';
+import {LanguageProvider} from '@/components/Language';
+export const metadata:Metadata={icons:{icon:'/brand/icon.svg'},title:'ORIMERI — Same taste. Different moments.',description:'Same taste. Different moments. A cultural place investigation grounded in Qloo, with evidence, questions and room to change your mind.'};
+export default function RootLayout({children}:{children:React.ReactNode}){return <html lang="en"><body><LanguageProvider>{children}</LanguageProvider></body></html>}

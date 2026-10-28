@@ -7,3 +7,11 @@ out
 *.log
 .DS_Store
 next-env.d.ts
+
+artifacts/
+playwright-report/
+test-results/
+*.tsbuildinfo
+.vercel/
+.env.*
+!.env.example

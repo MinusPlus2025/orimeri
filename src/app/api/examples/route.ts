@@ -1,0 +1,4 @@
+import {NextRequest,NextResponse} from 'next/server';import {resolveTaste} from '@/lib/agent';import {guard,errorResponse} from '@/lib/http';
+export const runtime='nodejs';export const maxDuration=30;
+const examples=[['Brian Eno','artist'],['In the Mood for Love','movie'],['The Little Prince','book'],['Dieter Rams','person'],['Aesop','brand']];
+export async function GET(req:NextRequest){try{guard(req);const settled=await Promise.allSettled(examples.map(async([query,type])=>{const all=await resolveTaste(query,req.signal);return all.find(t=>t.name.toLowerCase()===query.toLowerCase()&&t.type===`urn:entity:${type}`)??null;}));return NextResponse.json({ok:true,examples:settled.flatMap(s=>s.status==='fulfilled'&&s.value?[s.value]:[])},{headers:{'Cache-Control':'private, max-age=60'}});}catch(e){return errorResponse(e);}}

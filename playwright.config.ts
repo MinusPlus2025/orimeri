@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'tests/browser',timeout:120000,expect:{timeout:10000},fullyParallel:false,workers:1,retries:0,reporter:[['list'],['json',{outputFile:'artifacts/playwright-results.json'}]],use:{baseURL:process.env.BASE_URL||'http://127.0.0.1:3107',channel:'chrome',headless:true,screenshot:'only-on-failure',trace:'retain-on-failure'},outputDir:'artifacts/test-results'});
