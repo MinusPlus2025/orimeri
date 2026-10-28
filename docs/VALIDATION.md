@@ -2,13 +2,13 @@
 
 ## Running delivery
 - Public application: https://orimeri.vercel.app
-- Final deployment: dpl_9MomVENaAw6PwswxZjCvTTLhSqqC, Vercel READY. Both frontend and server-only APIs deployed.
+- Final deployment: dpl_2VzZ3tXcpXvqDsgQfsW7VZt1mhCw, Vercel READY. Both frontend and server-only APIs deployed.
 - Source baseline preserved in commit 6a500db; original WorkBuddy directory untouched.
 
 ## Internally tested
 - Production build and TypeScript passed.
 - Six core unit/integration checks passed: geography, dictionary coverage/fixed slogans, Qloo schema handling, provider failures, invalid model plans and hard-filter/exclusion enforcement. Synthetic fixtures are isolated to tests.
-- Six browser tests against the PUBLIC URL passed in 60 seconds: desktop real investigation; 390×844 mobile viewport real investigation; real Paris 2km geographic change; synthetic error/edit/privacy controls; synthetic empty/network failure; honest guest entry.
+- Six browser tests against the PUBLIC URL passed in 56.8 seconds: desktop real investigation; 390×844 mobile viewport real investigation; real Paris 2km geographic change; synthetic error/edit/privacy controls; synthetic empty/network failure; honest guest entry.
 - Desktop and mobile real flows cover Brian Eno resolution, selected count, deselect/reselect, identity inspection, deletion/re-add, Tokyo/Shibuya 5km query, list and map selection, unsupported live-atmosphere question, book-store replacement, Undo, language preservation, completed Chinese/Japanese explanations and local saved inputs.
 - Paris 2km returned HTTP 200 and 3 places; each returned coordinate was checked against the selected radius. No boundary was widened.
 - Public browser script audit checked 7 received JavaScript bundles and found zero configured credential values. Local tracked-source/client-bundle scan also found zero; .env.local is untracked. This is not a comprehensive third-party security audit.
@@ -38,6 +38,8 @@ Local evidence (excluded from the public source tree):
 - Stale local cultural entries can receive current image metadata from resolved examples. A 30×30 Dieter Rams image was observed from Qloo; low-resolution, failed and timed-out previews now use typography, never fabricated art.
 - Chinese/Japanese screenshots initially captured pending translations. Tests now wait for completion and assert English unknown-condition text has changed.
 - The earlier three-loop visual direction was replaced with a folded-aperture candidate and cut-terminal wordmark. The user has NOT approved the final visual design.
+
+- Final video inspection found and corrected small-avatar fallback overflow and an image-cache/load timeout race. Final browser recording was regenerated after correction. One recording attempt timed out waiting for the selected entity control; its network cause was not independently established. Waiting for client readiness and rerunning the actual flow succeeded (HTTP 200 discovery, explicit unsupported-condition response, Utrecht replacement and Undo).
 
 ## Current scope and gaps
 Latest user direction restricts this round to the real result experience and brand system. No further homepage expansion or full account system was pursued. Public GitHub publication and final Devpost submission are not completed in this round.
