@@ -22,7 +22,7 @@ The successful result leads with a real source-attributed venue image, a compact
 - Separate Qloo data, agent interpretation, measured distance and unverified live conditions. No invented affinity scores or cultural links.
 - Challenge a specific condition. A replacement changes one proposal and preserves the other proposals and all long-term tastes. Unverifiable atmosphere questions produce an explicit limitation, not a fabricated answer. Undo restores the preceding result.
 - EN / 中文 / 日本語 changes the UI without clearing the current input, selection, preferences, result or history. New agent explanations use the active language. Names and original source content are preserved.
-- Save search inputs locally, reopen for a fresh investigation, export or delete local data. The full flow works without login.
+- Save a complete local snapshot: selected place, cultural collection, local revisions, pending question and Undo history. Reopen without rerunning Qloo, export or delete local data. Historical results are explicitly dated. The full flow works without login.
 
 **Why Qloo matters:** place candidates and cultural contributions come from the taste graph, not from language-model venue generation. Removing Qloo removes entity grounding, taste-conditioned recommendations and provider attribution. No claim of superior real-user outcomes has been validated yet.
 
@@ -64,7 +64,7 @@ The Playwright configuration uses installed Google Chrome. Override `BASE_URL` t
 - At least one confirmed cultural reference is required. A one-click Brian Eno example is clearly marked as an example, not inferred user preference.
 - Noise, crowds, current hours, availability and other live conditions are unverified unless stated otherwise. External map/venue links are for manual checking.
 - Geographic and tag checks are internal software checks. They do not establish real-world suitability or independent user validation.
-- Email auth, database, transactional mail and cross-device synchronization are **not connected**. `/login` describes that status and offers the working guest route. Local saved moments retain inputs, not historical copies of Qloo data.
+- Email auth, database, transactional mail and cross-device synchronization are **not connected**. The unused sign-in entry has been removed; `/login` redirects to the guest workspace. Local snapshots are stored only in this browser and include historical Qloo results. Old input-only saves remain readable and require an explicit new search.
 - Rate limiting is best effort per server process (20 requests/minute/address/endpoint); this is not a distributed abuse-prevention service. Provider quotas still apply. Server cache is bounded and private, 60 seconds.
 - Requests time out and return explicit errors; a 401, 429 or outage never becomes a successful recommendation. API key validity expires under the hackathon's terms; ongoing operation requires continuing provider access.
 - Cultural attribution is Qloo's normalized input contribution, **not a probability, rating, or causal proof**.

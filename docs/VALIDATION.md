@@ -70,3 +70,14 @@ Final production script scripts/verify-shared-space.mjs passed: real Shibuya res
 Raw evidence: artifacts/shared-production/report.json, desktop/culture-focus/question/revision/mobile/mobile-question/map-failure.png and video/. Local build/test logs: artifacts/audit/shared-*.txt. A tracked/browser-file secret scan checked 98 files and found no configured secret values; .env is not tracked.
 
 Independent agent review checked the revision association and stable screenshots and marked those specific findings resolved; this is not independent human usability research or user aesthetic acceptance. External imagery rights/creator metadata remain incompletely supplied by Qloo; see IMAGE-SOURCES.md. Devpost submission has not been performed.
+
+
+## Complete local moments and personal-space repair — 2026-10-31
+
+Saved format v2 stores the complete investigation, selected place, all original enabled/disabled cultural references, twelve-step Undo history, local revisions and pending contextual question. Data is validated on load. Legacy v1 input-only records remain readable but never invent a missing result or automatically query. Historical snapshots show their save time. Failed browser writes do not announce success. Saving stale/unapplied inputs is disabled. Export includes complete snapshots; clearing local data removes legacy records too.
+
+Removed the nonfunctional account entry; /login redirects to the public guest workspace. Personal panels use content height and explicit padding; empty saves provide a working exploration action. Desktop/mobile navigation and all new copy support EN/ZH/JA.
+
+Local build passed. All 16 Playwright tests passed in 40.8s, including actual Qloo desktop/mobile queries, snapshot restoration after reload, persisted Undo, pending question, three-language local pages, legacy records and blocked storage. Personal-page axe checks and page-overflow checks passed at 390 and 1440. Separate real-data verification used Sahsya Kanetanaka → Utrecht, saved the revised result, reloaded, restored without another discovery request, then restored the original with Undo. See artifacts/audit/local-space-final.txt and artifacts/local-space-live/report.json. The saved.spec.ts fixtures are explicitly synthetic; the live script uses actual provider responses.
+
+No cloud account/sync, independent user validation or design acceptance is claimed. Browser storage can be cleared by the user/browser; historical images and external provider URLs may later expire.
