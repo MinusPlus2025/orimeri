@@ -1,5 +1,6 @@
 import 'server-only';
 import {randomUUID} from 'node:crypto';
+import {unverifiedNeeds} from './evidence';
 import {parseIntent} from './deepseek';
 import {qloo,entities,searchTags,searchEntities,ServiceError,type Entity} from './qloo';
 import {AREAS,coordinates,distanceM,safeUrl} from './geo';
@@ -14,7 +15,7 @@ export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<
  const canonical:Taste[]=[];for(const t of input.taste){const candidates=await resolveTaste(t.query,signal);const match=candidates.find(c=>c.entityId===t.entityId);if(!match)throw new ServiceError('TASTE_STALE',`Please resolve “${t.name}” again. Its selected identity could not be verified.`,422);canonical.push(match);}
  input={...input,taste:canonical};
  steps.push({label:'Taste held constant',detail:`${input.taste.length} selected Qloo identities verified. No preferences inferred from this moment.`});
- const plan=await parseIntent(input.moment,`${area.name}, ${area.city}`,input.challenge?.text,signal,input.locale);
+ const plan=await parseIntent(input.moment,`${area.name}, ${area.city}`,input.challenge?.text,signal,input.locale,input.challenge?.previousQuestions);
  if(plan.locationMismatch)throw new ServiceError('AREA_MISMATCH','Your moment names a different city. Change the search area before investigating.',422);
  if(input.challenge?.condition==='conditionAtmosphere')throw new ServiceError('CONDITION_UNVERIFIABLE','Qloo cannot verify current atmosphere, availability or opening hours. The original proposal was kept.',422);
  steps.push({label:'Moment interpreted',detail:plan.summary});
@@ -43,7 +44,7 @@ export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<
    if(Array.isArray(contributions))for(const v of contributions){const t=input.taste.find(t=>t.entityId===v.entity_id);if(t&&typeof v.score==='number'&&v.score>=0&&v.score<=1)ev.push({source:'Qloo',label:t.name,detail:`Qloo reports an input contribution of ${v.score.toFixed(2)} on its normalized 0–1 scale. This is not a probability that you will like the place.`});}
   }
   const affinity=typeof e.query?.affinity==='number'?e.query.affinity:null;
-  places.push({language:input.locale??'en',interpretation:plan.summary,id:e.entity_id,name:e.name,address:typeof p.address==='string'?p.address:null,category:(p.primary_genre as {name?:string}|undefined)?.name??tags.find(t=>t.id?.includes('genre:place'))?.name??'Place',...c,distanceM:Math.round(dist),image:safeUrl((p.image as {url?:string}|undefined)?.url??(p.images as {url?:string}[]|undefined)?.[0]?.url),website:safeUrl(p.website),affinity,evidence:ev,unknowns:[...new Set([...plan.unknowns,'Current opening hours, availability and on-site atmosphere have not been checked.',...(!explain?['No per-taste attribution was returned.']:[])])]});
+  places.push({language:input.locale??'en',interpretation:plan.summary,id:e.entity_id,name:e.name,address:typeof p.address==='string'?p.address:null,category:(p.primary_genre as {name?:string}|undefined)?.name??tags.find(t=>t.id?.includes('genre:place'))?.name??'Place',...c,distanceM:Math.round(dist),image:safeUrl((p.image as {url?:string}|undefined)?.url??(p.images as {url?:string}[]|undefined)?.[0]?.url),website:safeUrl(p.website),affinity,evidence:ev,unknowns:[...new Set([...unverifiedNeeds(plan.unknowns,area,input.radiusM),'Current opening hours, availability and on-site atmosphere have not been checked.',...(!explain?['No per-taste attribution was returned.']:[])])]});
  }
  steps.push({label:'Qloo investigated',detail:`${raw.length} candidates received; ${rejected} rejected by identity, exclusion or coordinate checks. Boundary was not widened.`});
  if(!places.length)notices.push('No verified places met this boundary and category combination. Edit the moment or explicitly widen the radius; no substitute places were invented.');

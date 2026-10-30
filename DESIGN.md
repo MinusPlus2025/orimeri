@@ -1,3 +1,5 @@
+> **Rejected by the user.** The implemented visual system described below is historical, not approved authority. Two unapproved Gate 1 alternatives are documented in docs/GATE1-DIRECTIONS.md. Do not integrate either before selection.
+
 # Discovery experience — current implementation
 
 The user rejected the earlier three-column, text-heavy dashboard. It is retained only in Git history, not as the current visual specification.
