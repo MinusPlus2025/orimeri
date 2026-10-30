@@ -1,5 +1,11 @@
 # Devpost submission draft — not submitted
 
+## Submission links
+- Demo: https://orimeri.vercel.app
+- Public MIT repository: https://github.com/MinusPlus2025/orimeri
+- Guest access; no account required.
+- This file is prepared submission copy, not proof of submission.
+
 ## Project name
 ORIMERI (candidate name)
 

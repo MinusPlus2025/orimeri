@@ -6,6 +6,10 @@ A working-name, open-source place investigation app for the Qloo Agentic Hackath
 
 **Public demo:** https://orimeri.vercel.app
 
+**Public source:** https://github.com/MinusPlus2025/orimeri
+
+The current result workspace places evidence and contextual questions alongside the selected proposal. On mobile, evidence precedes alternatives and the map. Visual acceptance remains pending; functional checks are not aesthetic approval.
+
 ## What it does
 
 The successful result leads with a real source-attributed venue image, a compact visual cultural collection and nearby alternatives. A secondary map provides geographic context; questions attach to specific evidence or unknowns. See [image provenance and rights](docs/IMAGE-SOURCES.md).
