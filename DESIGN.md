@@ -1,24 +1,18 @@
-> **Rejected by the user.** The implemented visual system described below is historical, not approved authority. Two unapproved Gate 1 alternatives are documented in docs/GATE1-DIRECTIONS.md. Do not integrate either before selection.
+# ORIMERI — current implemented proposal workspace
 
-# Discovery experience — current implementation
+The user has rejected previous visual directions. This document records implementation, not visual approval. Mode: Operate. Fixed slogans: Same taste. Different moments. / 品味如常，心境不同。
 
-The user rejected the earlier three-column, text-heavy dashboard. It is retained only in Git history, not as the current visual specification.
+## Interaction contract
+A selected real Qloo place remains the shared object. Its culture dock opens confirmed entity identity and the limits of cultural evidence in the same region. Evidence controls focus a condition; the adjacent pane becomes a contextual editor. Unsupported responses stay inside that editor. Successful local revisions show the removed and added place, the user's question and preserved preferences. Comparison binds only to the latest replacement; global Undo restores the actual previous snapshot. No decorative cultural edges or fabricated affinities.
 
-The successful discovery is the main object: one real Qloo place photograph and name, nearby alternatives with actual thumbnails, and a secondary geographic view using returned coordinates. The photograph is source content, never generated venue imagery. Missing imagery is explicitly labelled. No invented affinity networks, routes, ratings or properties.
+## Composition
+One bounded proposal contains the culture dock, selected photo, evidence/editor pane, alternatives and coordinate map. Mobile preserves this order and compresses the photo when questioning so the object remains recognizable. Existing preference management is opened from Edit collection.
 
-Before investigating, a compact cultural collection presents real resolved artists, cinema, books, design figures and brands when available from Qloo. Selecting an object changes the active cultural references; editing resolves its identity again. After investigating the collection contracts, preserving access to stable preferences.
+## Visual tokens and motion
+Central tokens in src/app/studio.css: graphite surfaces, mint selection/focus, warm unresolved-state text, Space Grotesk with CJK system fallback. Editable stencil SVG wordmark in Brand.tsx. Focus/expand transitions 220–240 ms; reduced-motion disables them. This is not a newly approved palette.
 
-A proposal exposes Qloo facts, calculated straight-line geography, and unresolved properties separately. A claim opens an inline contextual question. A revision replaces only the selected place, reports retained/removed/added candidates, and leaves stable taste intact. Undo restores the preceding proposal snapshot. Request interpretation is explicitly separate from venue-specific evidence.
+## Maps and truth
+Leaflet/OpenStreetMap renders real coordinates. Resizing preserves the camera instead of repeatedly fitting bounds. Tile loading is explicit, timeout/errors expose a retry, and markers remain backed by coordinates. External network availability cannot be guaranteed. Imagery remains provider sourced; no new cultural artwork was fabricated.
 
-English, Chinese and Japanese share the same state. Names and original inputs are preserved. New Agent explanations use the current language; existing explanations can be translated through the server with original-language fallback when unavailable.
-
-Responsive single-column mobile flow, keyboard-accessible forms, visible focus and reduced-motion support. Technical browser checks are internal validation, not user acceptance or independent usability research.
-
-Final UI system: neutral near-white canvas, graphite content and burnt-copper actions; original photo and cover colors remain intact. The slogan sits next to the full wordmark. An asymmetric two-region entry on desktop keeps cultural content and the compact intention composer together; mobile uses a scrollable cultural shelf. Entity details reveal verified identity and image provenance. Unavailable imagery becomes readable typography. Public-facing chrome does not repeat provisional-brand notices.
-
-
-## Current implemented result workspace — 2026-10-31
-
-The current main page uses src/app/studio.css tokens: graphite canvas, mint interaction states, warm warning text; Space Grotesk with CJK system fallback. src/components/Brand.tsx contains an editable stencil SVG wordmark. Fixed English/Chinese slogans are unchanged.
-
-The real selected venue photograph is the primary object. Condition controls open the existing contextual investigation area, alongside source evidence and unresolved claims. Alternative images and coordinate-based map remain directly selectable. Mobile follows the same object/evidence/alternatives sequence. Reduced-motion settings are honored. This is an implemented candidate, not a user-approved visual direction.
+## Evidence
+See docs/VALIDATION.md and scripts/verify-shared-space.mjs. Browser tests are internal verification, not aesthetic acceptance or independent user research.
