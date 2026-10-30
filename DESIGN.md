@@ -15,3 +15,10 @@ English, Chinese and Japanese share the same state. Names and original inputs ar
 Responsive single-column mobile flow, keyboard-accessible forms, visible focus and reduced-motion support. Technical browser checks are internal validation, not user acceptance or independent usability research.
 
 Final UI system: neutral near-white canvas, graphite content and burnt-copper actions; original photo and cover colors remain intact. The slogan sits next to the full wordmark. An asymmetric two-region entry on desktop keeps cultural content and the compact intention composer together; mobile uses a scrollable cultural shelf. Entity details reveal verified identity and image provenance. Unavailable imagery becomes readable typography. Public-facing chrome does not repeat provisional-brand notices.
+
+
+## Current implemented result workspace — 2026-10-31
+
+The current main page uses src/app/studio.css tokens: graphite canvas, mint interaction states, warm warning text; Space Grotesk with CJK system fallback. src/components/Brand.tsx contains an editable stencil SVG wordmark. Fixed English/Chinese slogans are unchanged.
+
+The real selected venue photograph is the primary object. Condition controls open the existing contextual investigation area, alongside source evidence and unresolved claims. Alternative images and coordinate-based map remain directly selectable. Mobile follows the same object/evidence/alternatives sequence. Reduced-motion settings are honored. This is an implemented candidate, not a user-approved visual direction.

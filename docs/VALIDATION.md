@@ -45,3 +45,12 @@ Local evidence (excluded from the public source tree):
 Latest user direction restricts this round to the real result experience and brand system. No further homepage expansion or full account system was pursued. Public GitHub publication and final Devpost submission are not completed in this round.
 
 No physical-phone testing or independent real-user validation. Mobile tests are Chrome viewport emulation. No verified current opening hours, noise, crowd or availability. Individual image-license/photographer metadata is not consistently supplied by Qloo; see IMAGE-SOURCES.md. Email authentication, cloud synchronization, brand clearance and native-Japanese human editorial review remain unverified/unimplemented. Internal checks and reviewer inspection do not constitute user design acceptance or a guarantee of competition success.
+
+
+## 2026-10-31 result workspace redesign
+
+Implemented graphite/mint design tokens, editable stencil SVG wordmark, photographic primary proposal, nearby image strip, and direct condition-question controls. Existing Qloo/DeepSeek contracts and Undo remain intact.
+
+Local production build passed. Browser suite: 12 passed (30.8s), including live desktop/mobile investigation and Paris 2 km constraints. Actual Shibuya query returned HTTP 200. Contextual quietness question returned CONDITION_UNVERIFIABLE, without inventing a live noise assessment. Axe scans at 390/768/1440: zero reported violations; no horizontal page overflow or browser exceptions. Language switching issued translation requests, no extra discovery requests.
+
+Evidence: artifacts/studio/{desktop,mobile,tablet,question}.png, browser-observations.json, video/; artifacts/audit/studio-tests.txt and studio-build.txt. These are local, ignored artifacts. Automated scans do not establish comprehensive accessibility or aesthetic acceptance. User visual acceptance remains pending. Venue imagery is supplied by Qloo; no fabricated covers or live venue properties added.
