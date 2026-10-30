@@ -58,3 +58,15 @@ Evidence: artifacts/studio/{desktop,mobile,tablet,question}.png, browser-observa
 Production release: 7093dc0, Vercel dpl_AHc3hjuBrMq1ZnGLANsF3vxWH9kC, https://orimeri.vercel.app. Production live suite: 3 passed (34.9s). Additional 390px real-query check verified all three direct condition buttons update selected state and focus the contextual input. Production axe 390/768/1440 reported zero violations and no page overflow. Production browser screenshots/video are in artifacts/studio-public/.
 
 Observed limitation: the production desktop capture showed coordinate markers and radius before external OpenStreetMap tiles rendered; four tile requests were aborted during the viewport sequence. Local captured map tiles rendered. Do not claim universal basemap availability. Qloo coordinates and list selection remain available. Current quietness/opening conditions remain unverified; no independent aesthetic acceptance or comprehensive accessibility certification.
+
+
+## Continuous proposal workspace — 2026-10-31
+Implementation commit 7ca912c. Production deployment dpl_EnKMPpotUqz51FcDw8mbEnGdWDK3 is READY at https://orimeri.vercel.app. Culture identity focus, contextual response, before/after replacement and Undo share the selected proposal. Multi-place comparison is limited to the latest replacement.
+
+Build passed. The 13-test browser run initially had one obsolete hidden-collection locator failure (12 passed); the test now enters Edit collection before inspecting restored selections. All seven audit tests then passed, including the new double-revision regression; the other six live/state tests passed in the preceding run. Axe at 390/768/1440 reported zero violations. These are internal tests, not visual approval.
+
+Final production script scripts/verify-shared-space.mjs passed: real Shibuya response HTTP 200 with three places at 1132/1105/1426 m; a real bookstore replacement; Undo; mobile unsupported quietness response; real map tiles; deliberate tile failure followed by successful retry. Mobile question-state axe reported no violations; disabled submit uses dark text on mint. No page exceptions or mobile horizontal overflow. Initial production navigation timed out waiting for all load events; the script now waits for DOM readiness then explicitly verifies each required resource and action.
+
+Raw evidence: artifacts/shared-production/report.json, desktop/culture-focus/question/revision/mobile/mobile-question/map-failure.png and video/. Local build/test logs: artifacts/audit/shared-*.txt. A tracked/browser-file secret scan checked 98 files and found no configured secret values; .env is not tracked.
+
+Independent agent review checked the revision association and stable screenshots and marked those specific findings resolved; this is not independent human usability research or user aesthetic acceptance. External imagery rights/creator metadata remain incompletely supplied by Qloo; see IMAGE-SOURCES.md. Devpost submission has not been performed.
