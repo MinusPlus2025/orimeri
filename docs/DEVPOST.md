@@ -52,7 +52,7 @@ Official sources: https://qloo.devpost.com/ and https://qloo.devpost.com/rules (
 
 Prepared: public demo URL, public MIT source, English project description, judge walkthrough, limitation disclosure, and reproducible interaction recording script (`scripts/verify-shared-space.mjs`). Actual local recordings/screenshots are under `artifacts/shared-final/`; these are evidence, not proof of a submitted entry.
 
-Still requires the entrant: Devpost sign-in, confirmation of personal eligibility/team/ownership, transfer of this copy into the submission form, final review and submission receipt. No eligibility certification or completed submission is claimed.
+Draft 1274120-orimeri already contains the English copy, public demo/repository links and real screenshots. Finalization is blocked by a Cloudflare security check and pending explicit acceptance of the official rules and Devpost terms. No completed submission is claimed.
 
 ## Final production walkthrough evidence
 A real browser run on https://orimeri.vercel.app selected Brian Eno, The Little Prince, In the Mood for Love, Dieter Rams and Aesop, and submitted “涩谷 5km，安静阅读，不去酒吧”. Qloo returned Sahsya Kanetanaka (1,132 m), Salon de Thé ROND (2,382 m) and Daikanyama Tsutaya (1,191 m). The parsed plan excluded bars and marked quietness/noise as unknown. A contextual quietness question returned CONDITION_UNVERIFIABLE; a category question produced a real local replacement; Undo restored the preceding proposal and kept all five references. These are straight-line distances from the Shibuya anchor, not routes.
