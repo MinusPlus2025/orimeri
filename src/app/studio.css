@@ -46,3 +46,5 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 .living-app .search-line .icon-button{flex:0 0 44px;width:44px;height:44px;color:var(--studio-accent);background:transparent;border:0}
 .living-app .search-line .icon-button:disabled{opacity:1;color:var(--studio-muted);cursor:not-allowed}
 @media(prefers-reduced-motion:reduce){.living-app .collection-editor .search-line{transition:none}}
+
+.culture-focus-media{display:block;width:100px;height:120px;flex-shrink:0}.culture-focus-media>img{width:100%;height:100%;object-fit:cover}.shared-proposal .culture-evidence-focus,.shared-proposal .revision-comparison{animation:none}.shared-proposal .place-photograph{overflow:hidden}@media(max-width:900px){.culture-focus-media{width:65px;height:80px}}
