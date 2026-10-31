@@ -12,3 +12,7 @@ Observed during production verification: the Dieter Rams image endpoint returned
 
 ## Entry scene (2026-10-31 reference sprint)
 The entry scene reuses the existing Qloo response image for Sahsya Kanetanaka: https://images.qloo.com/i/F5BB194F-7848-43EF-A7F8-9512D8F6A46A-420x-auto.jpg . Provenance: artifacts/gate1/response.private.json. The interface explicitly labels this a scene preview, not a current recommendation. It is not evidence of quietness or reading suitability. Qloo delivery identifies the source; it does not independently establish the underlying photograph's redistribution license. No Doubao avatar or generated venue imagery is used.
+
+
+## Original atmospheric scene
+`public/scenes/reading-space.webp`: original AI-generated imaginary reading space, created with OpenAI image generation at the user request. Only an explicitly labeled homepage illustration, not a Qloo venue or evidence. Real result photographs remain unchanged.
