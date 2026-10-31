@@ -12,6 +12,9 @@ ORIMERI (candidate name)
 ## Tagline
 Same taste. Different moments.
 
+## One-sentence description
+ORIMERI helps people keep their cultural taste while adapting discoveries to changing moments.
+
 ## Inspiration
 A person's cultural taste can stay consistent while what they need from a place changes from one moment to the next. We wanted an interface where a person can change their mind without starting over, and see what evidence a recommendation actually rests on.
 
@@ -50,3 +53,10 @@ Official sources: https://qloo.devpost.com/ and https://qloo.devpost.com/rules (
 Prepared: public demo URL, public MIT source, English project description, judge walkthrough, limitation disclosure, and reproducible interaction recording script (`scripts/verify-shared-space.mjs`). Actual local recordings/screenshots are under `artifacts/shared-final/`; these are evidence, not proof of a submitted entry.
 
 Still requires the entrant: Devpost sign-in, confirmation of personal eligibility/team/ownership, transfer of this copy into the submission form, final review and submission receipt. No eligibility certification or completed submission is claimed.
+
+## Final production walkthrough evidence
+A real browser run on https://orimeri.vercel.app selected Brian Eno, The Little Prince, In the Mood for Love, Dieter Rams and Aesop, and submitted “涩谷 5km，安静阅读，不去酒吧”. Qloo returned Sahsya Kanetanaka (1,132 m), Salon de Thé ROND (2,382 m) and Daikanyama Tsutaya (1,191 m). The parsed plan excluded bars and marked quietness/noise as unknown. A contextual quietness question returned CONDITION_UNVERIFIABLE; a category question produced a real local replacement; Undo restored the preceding proposal and kept all five references. These are straight-line distances from the Shibuya anchor, not routes.
+
+Moment Space is the implemented interaction model: Taste is the confirmed collection; Moment is editable intent and geography; Proposal is the selected real place; Evidence separates provider data and unresolved properties; Revision is a local replacement with visible before/after and undo. These objects remain in the same interface. Per-reference cultural attribution is shown only when Qloo returns it, not invented as a relationship graph.
+
+Evidence: artifacts/submission-five-tastes/report.json and actual browser screenshots. This establishes an internally tested path, not independent user validation or universal reliability. A prior production lookup timed out before a subsequent successful retry; external service reliability remains a limitation.
