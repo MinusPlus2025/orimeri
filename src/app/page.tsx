@@ -68,7 +68,7 @@ export default function Home(){
  const collection=[...taste,...examples.filter(e=>!taste.some(x=>x.entityId===e.entityId))];
  return <div className="living-app">
   <a className="skip" href="#moment">{t('home')}</a>
-  <header className="living-header"><a href="/" className="brand" aria-label="ORIMERI"><Brand/></a><span className="living-slogan">{t('slogan')}</span><LanguageSwitch/><Appearance/></header>
+  <header className="living-header"><a href="/" className="brand" aria-label="ORIMERI"><Brand/></a><span className="living-slogan">{locale==='en'?<>Same taste.<br className="mobile-slogan-break"/><span className="desktop-slogan-space"> </span>Different moments.</>:t('slogan')}</span><LanguageSwitch/><Appearance/></header>
   <main className="living-main">
    <nav className="living-nav"><button className={panel==='explore'?'active':''} onClick={()=>setPanel('explore')}>{t('home')}</button><button onClick={()=>{setPanel('explore');setCollectionOpen(v=>!v);}}>{t('taste')} <span data-testid="taste-count">{chosenTaste.length}/6</span></button><button className={panel==='saved'?'active':''} onClick={()=>setPanel('saved')}>{t('saved')} <span>{saved.length}</span></button><button className={panel==='privacy'?'active':''} onClick={()=>setPanel('privacy')}>{t('privacy')}</button></nav>
    <div role="status" className={notice?'notice':'sr-only'}>{notice?t(notice):''}</div>
