@@ -16,3 +16,6 @@ Leaflet/OpenStreetMap renders real coordinates. Resizing preserves the camera in
 
 ## Evidence
 See docs/VALIDATION.md and scripts/verify-shared-space.mjs. Browser tests are internal verification, not aesthetic acceptance or independent user research.
+
+## Decision flow revision — 2026-10-31
+The question editor now belongs to the selected place immediately below its controls. On narrow screens, opening it temporarily removes the long evidence sidebar from the reading path; closing restores it. Culture focus names the current place and shows only returned per-reference contribution, or explicitly states attribution is absent. Agent request interpretation is progressive disclosure, not the headline rationale. Unverifiable-condition responses expose real venue and map links as actionable recovery, without treating those external pages as verified facts.

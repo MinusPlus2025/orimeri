@@ -40,7 +40,7 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 
 /* One coherent input surface; remove legacy white wrapper and dark inner slab. */
 .living-app .collection-editor .search-line{background:var(--studio-surface);border:1px solid var(--studio-line);border-radius:8px;padding:4px 6px 4px 14px;gap:8px;box-shadow:none;transition:border-color 180ms ease,background-color 180ms ease}
-.living-app .collection-editor .search-line:focus-within{border-color:var(--studio-accent);background:var(--studio-raised);outline:2px solid var(--studio-accent);outline-offset:2px}
+.living-app .collection-editor .search-line:focus-within{border-color:var(--studio-accent);background:var(--studio-raised);outline:2px solid var(--studio-accent);outline-offset:-2px}
 .living-app .taste-search .search-line input{min-width:0;flex:1;width:100%;height:46px;padding:0;background:transparent;color:var(--studio-ink);border:0;outline:none;box-shadow:none}
 .living-app .taste-search .search-line input::placeholder{color:var(--studio-muted);opacity:1}
 .living-app .search-line .icon-button{flex:0 0 44px;width:44px;height:44px;color:var(--studio-accent);background:transparent;border:0}
@@ -48,3 +48,17 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 @media(prefers-reduced-motion:reduce){.living-app .collection-editor .search-line{transition:none}}
 
 .culture-focus-media{display:block;width:100px;height:120px;flex-shrink:0}.culture-focus-media>img{width:100%;height:100%;object-fit:cover}.shared-proposal .culture-evidence-focus,.shared-proposal .revision-comparison{animation:none}.shared-proposal .place-photograph{overflow:hidden}@media(max-width:900px){.culture-focus-media{width:65px;height:80px}}
+
+/* Decision workspace: editing belongs to the place, provenance stays adjacent. */
+.shared-proposal .place-experience>.contextual-question{padding:22px!important;border-bottom:1px solid var(--studio-line)!important;background:var(--studio-raised)!important;position:relative;scroll-margin:24px}
+.shared-proposal .place-experience>.contextual-question>div>h2{display:block;font-size:20px;margin-bottom:6px}
+.shared-proposal .contextual-question .close-question{position:absolute;right:12px;top:12px}
+.shared-proposal .contextual-question textarea{width:100%;resize:vertical;min-height:88px}
+.shared-proposal.is-questioning .discovery-understanding .fact-controls,.shared-proposal.is-questioning .discovery-understanding .uncertainty-area>h2,.shared-proposal.is-questioning .discovery-understanding .uncertainty-area>p,.shared-proposal.is-questioning .discovery-understanding .uncertain-claims{display:flex}
+.shared-proposal .agent-reading summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--studio-accent);font-size:13px}
+.shared-proposal .agent-reading p{margin-top:8px}.shared-proposal .agent-reading{padding:0;background:transparent}
+.culture-place-evidence{padding:12px 0;margin-top:10px;border-top:1px solid var(--studio-line)}.culture-place-evidence>strong{font-size:16px}.culture-place-evidence .attribution-limit{color:var(--studio-warning)}
+.culture-evidence-focus .secondary{width:auto;display:inline-flex;gap:12px;align-items:center;margin-top:12px;padding:10px 16px}.culture-evidence-focus summary{color:var(--studio-muted);font-size:12px;min-height:32px;cursor:pointer}
+@media(max-width:900px){.shared-proposal.is-questioning .discovery-understanding{display:none}.shared-proposal .place-experience>.contextual-question{padding:18px 14px!important}.shared-proposal .question-actions{gap:8px}.shared-proposal .culture-evidence-focus{gap:12px}.shared-proposal .culture-evidence-focus>div{flex-basis:calc(100% - 120px)}}
+
+.verification-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}.verification-actions a{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:var(--studio-accent);text-decoration:underline;text-underline-offset:4px;font-size:13px}
