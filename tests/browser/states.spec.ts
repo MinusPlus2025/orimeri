@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 const taste={entityId:'11111111-1111-4111-8111-111111111111',name:'Synthetic artist',query:'Synthetic artist',type:'urn:entity:artist'};
 test('empty state, localized errors, editing, persistence and privacy controls',async({page})=>{
  await page.goto('/');await expect(page.locator('.leaflet-map')).toHaveCount(0);await expect(page.locator('.culture-collection')).toBeVisible();
- await page.getByTestId('explore').click();await expect(page.locator('.error-banner')).toContainText('Add one cultural reference');
+ await expect(page.getByTestId('explore')).toBeDisabled();await expect(page.locator('#taste-prerequisite')).toContainText('Choose at least one');
  await page.route('**/api/taste',route=>route.fulfill({status:200,json:{ok:true,candidates:[taste]}}));
  await page.locator('#taste-query').fill('Synthetic artist');await page.getByRole('button',{name:'Search Qloo',exact:true}).click();await page.locator('.candidate-list button').first().click();await expect(page.getByTestId('taste-count')).toHaveText('1/6');
  await page.locator('.collection-heading button').click();await page.getByRole('button',{name:'Edit Synthetic artist'}).click();await expect(page.locator('#taste-query')).toHaveValue('Synthetic artist');await page.getByRole('button',{name:'Cancel',exact:true}).click();
