@@ -9,6 +9,7 @@ export async function resolveTaste(query:string,signal?:AbortSignal):Promise<Tas
  return (await searchEntities(query,signal)).filter(e=>e.entity_id&&e.name).map(e=>({entityId:e.entity_id!,name:e.name!,type:e.types?.[0]??e.type??'Cultural entity',query,image:safeUrl((e.properties?.image as {url?:string}|undefined)?.url??(e.properties?.images as {url?:string}[]|undefined)?.[0]?.url)}));
 }
 export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<Investigation>{
+ if(input.challenge?.condition==='conditionAtmosphere')throw new ServiceError('CONDITION_UNVERIFIABLE','Qloo cannot verify current atmosphere, availability or opening hours. The original proposal was kept.',422);
  const area=AREAS.find(a=>a.id===input.areaId)!;
  const steps:Investigation['steps']=[],notices:string[]=[];
  // Revalidate client-selected IDs against server results; no fabricated or stale IDs enter signals.
@@ -17,7 +18,6 @@ export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<
  steps.push({label:'Taste held constant',detail:`${input.taste.length} selected Qloo identities verified. No preferences inferred from this moment.`});
  const plan=await parseIntent(input.moment,`${area.name}, ${area.city}`,input.challenge?.text,signal,input.locale,input.challenge?.previousQuestions);
  if(plan.locationMismatch)throw new ServiceError('AREA_MISMATCH','Your moment names a different city. Change the search area before investigating.',422);
- if(input.challenge?.condition==='conditionAtmosphere')throw new ServiceError('CONDITION_UNVERIFIABLE','Qloo cannot verify current atmosphere, availability or opening hours. The original proposal was kept.',422);
  steps.push({label:'Moment interpreted',detail:plan.summary});
  async function resolveTags(words:string[],required:boolean){
   const out:{id:string;name:string}[]=[];
@@ -44,7 +44,7 @@ export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<
    if(Array.isArray(contributions))for(const v of contributions){const t=input.taste.find(t=>t.entityId===v.entity_id);if(t&&typeof v.score==='number'&&v.score>=0&&v.score<=1)ev.push({source:'Qloo',label:t.name,detail:`Qloo reports an input contribution of ${v.score.toFixed(2)} on its normalized 0–1 scale. This is not a probability that you will like the place.`});}
   }
   const affinity=typeof e.query?.affinity==='number'?e.query.affinity:null;
-  places.push({language:input.locale??'en',interpretation:plan.summary,id:e.entity_id,name:e.name,address:typeof p.address==='string'?p.address:null,category:(p.primary_genre as {name?:string}|undefined)?.name??tags.find(t=>t.id?.includes('genre:place'))?.name??'Place',...c,distanceM:Math.round(dist),image:safeUrl((p.image as {url?:string}|undefined)?.url??(p.images as {url?:string}[]|undefined)?.[0]?.url),website:safeUrl(p.website),affinity,evidence:ev,unknowns:[...new Set([...unverifiedNeeds(plan.unknowns,area,input.radiusM),'Current opening hours, availability and on-site atmosphere have not been checked.',...(!explain?['No per-taste attribution was returned.']:[])])]});
+  places.push({checks:{categories:included.filter(t=>tagIds.includes(t.id)).map(t=>t.name),excludedCategories:excluded.map(t=>t.name),radiusM:input.radiusM,origin:area.name},language:input.locale??'en',interpretation:plan.summary,id:e.entity_id,name:e.name,address:typeof p.address==='string'?p.address:null,category:(p.primary_genre as {name?:string}|undefined)?.name??tags.find(t=>t.id?.includes('genre:place'))?.name??'Place',...c,distanceM:Math.round(dist),image:safeUrl((p.image as {url?:string}|undefined)?.url??(p.images as {url?:string}[]|undefined)?.[0]?.url),website:safeUrl(p.website),affinity,evidence:ev,unknowns:[...new Set([...unverifiedNeeds(plan.unknowns,area,input.radiusM),'Current opening hours, availability and on-site atmosphere have not been checked.',...(!explain?['No per-taste attribution was returned.']:[])])]});
  }
  steps.push({label:'Qloo investigated',detail:`${raw.length} candidates received; ${rejected} rejected by identity, exclusion or coordinate checks. Boundary was not widened.`});
  if(!places.length)notices.push('No verified places met this boundary and category combination. Edit the moment or explicitly widen the radius; no substitute places were invented.');
