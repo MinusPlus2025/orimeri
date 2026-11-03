@@ -328,3 +328,19 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 .entry-workspace .culture-select>small{display:block;margin:0!important}
 .entry-workspace .culture-cover .image-unavailable{background:var(--studio-raised);color:var(--studio-ink)}
 .entry-workspace .culture-cover .image-unavailable strong{font-size:17px;line-height:1.3}
+
+/* A shared navigation indicator follows intent; hit targets remain stationary. */
+.living-nav{position:relative;isolation:isolate}
+.living-nav::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:var(--nav-w,0px);transform:translateX(var(--nav-x,0px));background:var(--studio-accent);border-radius:3px;pointer-events:none;transition:transform 260ms cubic-bezier(.22,1,.36,1),width 260ms cubic-bezier(.22,1,.36,1)}
+.living-nav button,.living-nav button.active{border-bottom-color:transparent!important;box-shadow:none!important;transition:color 180ms ease,background-color 180ms ease}
+.culture-cover{transition:transform 240ms cubic-bezier(.22,1,.36,1),box-shadow 240ms ease}
+.proposal-index button,.linked-tastes button,.proposal-actions button{transition:background-color 220ms ease,box-shadow 220ms ease,border-color 220ms ease}
+@media(hover:hover) and (pointer:fine){
+.culture-select:not(:disabled):hover .culture-cover{transform:translateY(-4px);box-shadow:0 8px 18px color-mix(in srgb,var(--studio-ink) 14%,transparent)}
+.proposal-index button:hover,.linked-tastes button:hover,.proposal-actions button:hover{background:var(--studio-raised);box-shadow:inset 0 -2px var(--studio-accent)}
+.living-nav button:hover{color:var(--studio-accent)}
+}
+@media(prefers-reduced-motion:reduce){
+.living-nav::after,.living-nav button,.culture-cover,.proposal-index button,.linked-tastes button,.proposal-actions button{transition:none!important}
+.culture-select:not(:disabled):hover .culture-cover{transform:none}
+}
