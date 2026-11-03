@@ -36,7 +36,7 @@ export default function Home(){
  const active=result?.places.find(p=>p.id===selected);
  const chosenTaste=taste.filter(x=>x.enabled!==false);
  useEffect(()=>{fetch('/api/examples').then(r=>r.json()).then(b=>{if(b.ok){setExamples(b.examples);setTaste(current=>current.map(x=>{const fresh=b.examples.find((e:Taste)=>e.entityId===x.entityId);return fresh?{...x,image:fresh.image,name:fresh.name,type:fresh.type}:x;}));}}).catch(()=>{});},[]);
- const translationKey=active?JSON.stringify([active.id,active.interpretation,active.unknowns,locale]):'';
+ const translationKey=active?JSON.stringify([active.id,active.interpretation,result?.plan.summary,active.unknowns,locale]):'';
  useEffect(()=>{if(!active||!active.language||active.language===locale||translations[translationKey]){setTranslating(false);setTranslationFailed(false);return;}const controller=new AbortController();setTranslating(true);setTranslationFailed(false);fetch('/api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({locale,texts:[active.interpretation||result?.plan.summary||'',...active.unknowns.filter(u=>!u.startsWith('Current opening')&&!u.startsWith('No per-taste'))]}),signal:controller.signal}).then(r=>r.json()).then(b=>{if(b.ok)setTranslations(v=>({...v,[translationKey]:b.texts}));else setTranslationFailed(true);}).catch(e=>{if(e.name!=='AbortError')setTranslationFailed(true);}).finally(()=>{if(!controller.signal.aborted)setTranslating(false);});return()=>controller.abort();},[locale,active?.id,active?.interpretation,translationKey]);
  const translated=translations[translationKey];
  const shownInterpretation=translated?.[0]??active?.interpretation??result?.plan.summary;
