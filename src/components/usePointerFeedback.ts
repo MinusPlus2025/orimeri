@@ -5,7 +5,7 @@ export function usePointerFeedback(){useEffect(()=>{
  const media=matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
  const nav=document.querySelector<HTMLElement>('.living-nav');
  let hovered:HTMLElement|null=null;
- const positionNav=()=>{const item=hovered||nav?.querySelector<HTMLElement>('[aria-current="page"]');if(!nav||!item)return;const a=nav.getBoundingClientRect(),b=item.getBoundingClientRect();nav.style.setProperty('--nav-x',`${b.left-a.left+nav.scrollLeft}px`);nav.style.setProperty('--nav-w',`${b.width}px`);};
+ const positionNav=()=>{const item=hovered||nav?.querySelector<HTMLElement>('[aria-current="page"]');if(!nav||!item)return;const a=nav.getBoundingClientRect(),b=item.getBoundingClientRect();nav.style.setProperty('--nav-x',`${b.left-a.left+nav.scrollLeft}px`);nav.style.setProperty('--nav-w',`${b.width}px`);nav.style.setProperty('--nav-y',`${b.top-a.top}px`);nav.style.setProperty('--nav-h',`${b.height}px`);};
  const navOver=(e:PointerEvent)=>{if(e.pointerType!=='mouse')return;hovered=(e.target as Element).closest<HTMLElement>('button');positionNav();};
  const navLeave=()=>{hovered=null;positionNav();};
  const navFocus=(e:FocusEvent)=>{hovered=(e.target as Element).closest<HTMLElement>('button');positionNav();};

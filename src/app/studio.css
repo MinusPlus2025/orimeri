@@ -344,3 +344,17 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 .living-nav::after,.living-nav button,.culture-cover,.proposal-index button,.linked-tastes button,.proposal-actions button{transition:none!important}
 .culture-select:not(:disabled):hover .culture-cover{transform:none}
 }
+
+/* Primary navigation: persistent current location and a moving intent surface. */
+.living-app .living-nav{gap:8px;padding:12px 0;margin-bottom:20px}
+.living-app .living-nav button{position:relative;z-index:1;min-height:48px;padding:10px 16px;border-radius:10px;font-size:16px!important;font-weight:550;color:var(--studio-ink);white-space:nowrap}
+.living-app .living-nav button[aria-current="page"]{background:var(--studio-raised);color:var(--studio-accent);font-weight:700}
+.living-app .living-nav button span{display:inline-flex;align-items:center;justify-content:center;min-width:24px;padding:2px 6px;margin-left:8px;border-radius:6px;background:var(--studio-bg);font-size:13px;font-weight:600}
+.living-app .living-nav::after{top:var(--nav-y,12px);bottom:auto;height:var(--nav-h,48px);border-radius:10px;background:color-mix(in srgb,var(--studio-accent) 12%,transparent);z-index:0;transition:transform 260ms cubic-bezier(.22,1,.36,1),width 260ms cubic-bezier(.22,1,.36,1),height 200ms ease}
+.living-app .living-nav button:focus-visible{outline:2px solid var(--studio-accent);outline-offset:-2px}
+.proposal-actions .evidence-action svg{transition:transform 220ms cubic-bezier(.22,1,.36,1)}
+@media(hover:hover) and (pointer:fine){.proposal-actions button:hover .evidence-action svg{transform:translateX(4px)}}
+@media(max-width:600px){.living-app .living-nav{gap:6px;padding:10px 0!important}.living-app .living-nav button{font-size:15px!important;padding:10px 12px}.living-app .living-nav button span{margin-left:5px}}
+@media(prefers-reduced-motion:reduce){.living-app .living-nav::after,.proposal-actions .evidence-action svg{transition:none!important}.proposal-actions button:hover .evidence-action svg{transform:none}}
+@media(max-width:600px){.living-app .living-nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:6px}.living-app .living-nav button{min-width:0;white-space:normal;text-align:left;font-size:14px!important;padding:10px}.living-app .living-nav::after{transition:transform 260ms cubic-bezier(.22,1,.36,1),top 260ms cubic-bezier(.22,1,.36,1),width 260ms cubic-bezier(.22,1,.36,1)}}
+@media(prefers-reduced-motion:reduce){.living-app .living-nav::after{transition:none!important}}
