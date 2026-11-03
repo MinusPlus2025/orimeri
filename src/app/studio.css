@@ -358,3 +358,9 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 @media(prefers-reduced-motion:reduce){.living-app .living-nav::after,.proposal-actions .evidence-action svg{transition:none!important}.proposal-actions button:hover .evidence-action svg{transform:none}}
 @media(max-width:600px){.living-app .living-nav{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;gap:6px}.living-app .living-nav button{min-width:0;white-space:normal;text-align:left;font-size:14px!important;padding:10px}.living-app .living-nav::after{transition:transform 260ms cubic-bezier(.22,1,.36,1),top 260ms cubic-bezier(.22,1,.36,1),width 260ms cubic-bezier(.22,1,.36,1)}}
 @media(prefers-reduced-motion:reduce){.living-app .living-nav::after{transition:none!important}}
+
+/* Shared page rhythm: one gap after navigation across workspace and personal views. */
+.living-app .living-nav{padding:24px 0 0!important;margin:0 0 24px!important}
+.living-app .personal-panel{margin-top:0}
+.living-app .moment-summary{margin-top:0}
+@media(max-width:600px){.living-app .living-nav{padding:16px 0 0!important;margin-bottom:16px!important}}
