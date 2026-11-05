@@ -485,3 +485,6 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
  line-height: 1.4;
  min-height: 2.8em;
 }
+
+/* Keep visual, reading and keyboard order together at every breakpoint. */
+.living-app .shared-proposal > * { order: 0; }

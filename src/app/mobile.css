@@ -67,3 +67,6 @@
  max-width: none;
  padding: clamp(20px, 2.5vw, 34px) clamp(16px, 2vw, 32px) 24px;
 }
+@media (max-width: 760px) {
+ html { scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}

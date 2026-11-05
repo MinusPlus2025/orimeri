@@ -8,6 +8,10 @@ for(const width of [1440,390])test(`decision preview, discard, adopt, undo and l
  await page.route('**/api/examples',r=>r.fulfill({json:{ok:true,examples:[]}}));await page.route('**/api/translate',r=>r.fulfill({json:{ok:true,texts:['Synthetic translated explanation']}}));let calls=0;
  await page.route('**/api/discover',r=>{calls++;return r.fulfill({json:{ok:true,result:calls===1?result:{...result,id:'replacement-fixture',places:[{...place,id:'replacement',name:'Synthetic bookstore',category:'Book store',checks:{categories:['Book store'],excludedCategories:['Restaurant'],radiusM:2000,origin:'Shibuya'}}]}}});});
  await page.goto('/');await page.locator('#moment').fill(result.input);await page.getByTestId('explore').click();await expect(page.locator('.photograph-caption h1')).toHaveText(place.name);
+ const photo=await page.locator('.place-photograph').boundingBox();
+ const tasteDock=await page.locator('.proposal-culture-dock').boundingBox();
+ expect(photo!.y+photo!.height).toBeLessThanOrEqual(tasteDock!.y);
+
  await page.locator('.proposal-actions button').first().click();await expect(page.locator('.capability-note')).toContainText('cannot verify');await expect(page.locator('.agent-reading')).toBeVisible();await expect(page.locator('.uncertainty-area>h2')).toBeVisible();await expect(page.locator('.proposal-actions')).toContainText('Cafe');await page.screenshot({path:`artifacts/evidence-context-${width}.png`,fullPage:true});await expect(page.getByTestId('reinvestigate')).toHaveCount(0);await expect(page.locator('#challenge')).toHaveCount(0);expect(calls).toBe(1);
  await page.locator('.close-question').click();await expect(page.locator('.proposal-actions button').first()).toBeFocused();await page.locator('.proposal-actions button').nth(1).click();await expect(page.locator('#challenge')).toBeFocused();await page.keyboard.press('Escape');await expect(page.locator('#proposal-question')).toHaveCount(0);await expect(page.locator('.proposal-actions button').nth(1)).toBeFocused();await page.locator('.proposal-actions button').nth(1).click();await page.locator('#challenge').fill('A bookstore instead');
  await page.locator('.living-nav button').nth(1).click();
@@ -44,8 +48,7 @@ for(const width of [1440,390])test(`source resolution, action gaps and pointer f
  await page.goto('/');await page.locator('#moment').fill(result.input);await page.getByTestId('explore').click();
  const image=page.locator('.place-photograph>img');await expect(image).toHaveAttribute('data-compact','true');expect((await image.boundingBox())!.width).toBeLessThanOrEqual(240);
  expect(await page.locator('.proposal-actions').evaluate(el=>parseFloat(getComputedStyle(el).gap))).toBeGreaterThanOrEqual(10);
- const control=page.locator('.linked-tastes button').first();await control.scrollIntoViewIfNeeded();const box=(await control.boundingBox())!;
- await page.mouse.move(box.x+box.width*.8,box.y+box.height*.7);
+ const control=page.locator('.linked-tastes button').first();await control.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));await control.hover();
  await expect.poll(()=>control.evaluate(el=>el.style.getPropertyValue('--pointer-x'))).not.toBe('');
  await page.emulateMedia({reducedMotion:'reduce'});await expect.poll(()=>control.evaluate(el=>el.style.getPropertyValue('--pointer-x'))).toBe('');
  await image.scrollIntoViewIfNeeded();await page.screenshot({path:`artifacts/source-spacing-${width}.png`,fullPage:false});
