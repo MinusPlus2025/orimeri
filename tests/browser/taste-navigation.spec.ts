@@ -7,7 +7,7 @@ for(const width of [1440,390])test(`taste navigation and editor at ${width}`,asy
  await expect(page.locator('#taste-query')).toHaveCount(0);
  await page.locator('.living-nav button').nth(1).click();
  await expect(page.locator('#taste-collection')).toBeFocused();
- await expect(page.locator('#taste-query')).toBeVisible();
+ await expect(page.locator('#taste-query')).toBeVisible();await expect(page.locator('#moment')).toBeHidden();
  await page.locator('.collection-heading button').click();
  await expect(page.locator('#taste-query')).toHaveCount(0);
  await page.locator('.collection-add').click();await expect(page.locator('#taste-query')).toBeFocused();

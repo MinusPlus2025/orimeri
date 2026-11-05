@@ -1,0 +1,16 @@
+import {useEffect,useRef,useState} from 'react';
+import {LocateFixed} from 'lucide-react';
+import {AREAS,resolveArea} from '@/lib/geo';
+import {cityNames} from '@/lib/i18n';
+const labels={
+ en:{area:'Search center',near:'Near me',loading:'Locating…',confirm:'Use this search center',cancel:'Cancel',hint:'Location is requested only when you choose Near me. Confirm before using it.',failed:'Location unavailable. Allow location access or choose a suggested area.',inaccurate:'Location is too approximate. Try again with precise location enabled.',accuracy:'Approximate accuracy',selected:'Selected location'},
+ zh:{area:'探索中心',near:'我附近',loading:'正在定位…',confirm:'以此位置为中心',cancel:'取消',hint:'点击“我附近”才会请求定位，确认后才用于探索。',failed:'无法定位。请允许位置访问，或选择预设地区。',inaccurate:'定位范围过大，请开启精确定位后重试。',accuracy:'定位精度约',selected:'已选位置'},
+ ja:{area:'探索の中心',near:'現在地の周辺',loading:'位置を取得中…',confirm:'この位置を中心にする',cancel:'キャンセル',hint:'現在地の周辺を押した時だけ位置を取得します。確認後に探索に使います。',failed:'位置を取得できません。位置情報を許可するか、エリアを選んでください。',inaccurate:'位置が不正確です。正確な位置情報を有効にして再試行してください。',accuracy:'位置の精度：約',selected:'選択した位置'}
+};
+export function AreaPicker({value,onChange,locale,disabled}:{value:string;onChange:(id:string)=>void;locale:'en'|'zh'|'ja';disabled:boolean}){
+ const t=labels[locale],area=resolveArea(value);const [busy,setBusy]=useState(false),[failure,setFailure]=useState<'failed'|'inaccurate'|null>(null),[pending,setPending]=useState<{id:string;accuracy:number}|null>(null);
+ const request=useRef(0);useEffect(()=>()=>{request.current++;},[]);
+ useEffect(()=>{request.current++;setBusy(false);setPending(null);setFailure(null);},[value,disabled]);
+ function locate(){const seq=++request.current;setPending(null);setFailure(null);if(!navigator.geolocation){setFailure('failed');return;}setBusy(true);navigator.geolocation.getCurrentPosition(position=>{if(seq!==request.current)return;setBusy(false);const {latitude,longitude,accuracy}=position.coords;const id=`nearby:${latitude.toFixed(6)},${longitude.toFixed(6)}`;if(!resolveArea(id)||!Number.isFinite(accuracy)||accuracy>1000){setFailure('inaccurate');return;}setPending({id,accuracy:Math.ceil(accuracy)});},()=>{if(seq!==request.current)return;setBusy(false);setFailure('failed');},{enableHighAccuracy:true,timeout:10000,maximumAge:0});}
+ return <div className="area-picker"><div className="area-picker-controls"><label className="sr-only" htmlFor="area">{t.area}</label><select id="area" value={value} disabled={disabled} onChange={e=>onChange(e.target.value)}>{AREAS.map(a=><option key={a.id} value={a.id}>{cityNames[locale][a.id]} · {a.name}</option>)}{area&&!AREAS.some(a=>a.id===value)&&<option value={value}>{t.selected} · {area.name}</option>}</select><button type="button" className="text-button" disabled={disabled||busy} onClick={locate} title={t.hint}><LocateFixed size={16}/>{busy?t.loading:t.near}</button></div>{failure&&<p role="alert">{t[failure]}</p>}{pending&&<div className="location-confirm" role="status"><p>{resolveArea(pending.id)?.name} · {t.accuracy} {pending.accuracy} m</p><div><button type="button" className="text-button" onClick={()=>{onChange(pending.id);setPending(null);}}>{t.confirm}</button><button type="button" className="text-button" onClick={()=>setPending(null)}>{t.cancel}</button></div></div>}</div>;
+}

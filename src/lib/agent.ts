@@ -1,16 +1,17 @@
 import 'server-only';
 import {randomUUID} from 'node:crypto';
 import {unverifiedNeeds} from './evidence';
+import {prioritizeRequestedCategory} from './proposal-order';
 import {parseIntent} from './deepseek';
 import {qloo,entities,searchTags,searchEntities,ServiceError,type Entity} from './qloo';
-import {AREAS,coordinates,distanceM,safeUrl} from './geo';
+import {resolveArea,coordinates,distanceM,safeUrl} from './geo';
 import type {DiscoverInput,Investigation,Place,Taste} from './types';
 export async function resolveTaste(query:string,signal?:AbortSignal):Promise<Taste[]>{
  return (await searchEntities(query,signal)).filter(e=>e.entity_id&&e.name).map(e=>({entityId:e.entity_id!,name:e.name!,type:e.types?.[0]??e.type??'Cultural entity',query,image:safeUrl((e.properties?.image as {url?:string}|undefined)?.url??(e.properties?.images as {url?:string}[]|undefined)?.[0]?.url)}));
 }
 export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<Investigation>{
  if(input.challenge?.condition==='conditionAtmosphere')throw new ServiceError('CONDITION_UNVERIFIABLE','Qloo cannot verify current atmosphere, availability or opening hours. The original proposal was kept.',422);
- const area=AREAS.find(a=>a.id===input.areaId)!;
+ const area=resolveArea(input.areaId);if(!area)throw new ServiceError('INVALID_INPUT','Choose a valid search center.',400);
  const steps:Investigation['steps']=[],notices:string[]=[];
  // Revalidate client-selected IDs against server results; no fabricated or stale IDs enter signals.
  const canonical:Taste[]=[];for(const t of input.taste){const candidates=await resolveTaste(t.query,signal);const match=candidates.find(c=>c.entityId===t.entityId);if(!match)throw new ServiceError('TASTE_STALE',`Please resolve “${t.name}” again. Its selected identity could not be verified.`,422);canonical.push(match);}
@@ -48,5 +49,5 @@ export async function discover(input:DiscoverInput,signal?:AbortSignal):Promise<
  }
  steps.push({label:'Qloo investigated',detail:`${raw.length} candidates received; ${rejected} rejected by identity, exclusion or coordinate checks. Boundary was not widened.`});
  if(!places.length)notices.push('No verified places met this boundary and category combination. Edit the moment or explicitly widen the radius; no substitute places were invented.');
- return {id:randomUUID(),at:new Date().toISOString(),input:input.moment,taste:input.taste,area,radiusM:input.radiusM,plan,places:places.slice(0,input.challenge?1:3),steps,notices,live:true};
+ return {id:randomUUID(),at:new Date().toISOString(),input:input.moment,taste:input.taste,area,radiusM:input.radiusM,plan,places:prioritizeRequestedCategory(places,included.map(t=>t.name)).slice(0,input.challenge?1:3),steps,notices,live:true};
 }

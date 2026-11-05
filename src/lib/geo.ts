@@ -23,3 +23,13 @@ export function coordinates(e:Record<string,unknown>):{lat:number;lon:number}|nu
  return null;
 }
 export function safeUrl(v:unknown):string|null {if(typeof v!=='string')return null;try{const u=new URL(v);return u.protocol==='https:'||u.protocol==='http:'?u.href:null;}catch{return null;}}
+
+// Coordinate-backed IDs survive save/restore without a second mutable area registry.
+export function resolveArea(id:string):Area|null {
+ const preset=AREAS.find(a=>a.id===id);if(preset)return preset;
+ const match=/^nearby:([+-]?\d+(?:\.\d+)?),([+-]?\d+(?:\.\d+)?)$/.exec(id);
+ if(!match)return null;
+ const lat=Number(match[1]),lon=Number(match[2]);
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+ return {id,name:`${lat.toFixed(4)}, ${lon.toFixed(4)}`,city:'Selected coordinates',lat,lon};
+}

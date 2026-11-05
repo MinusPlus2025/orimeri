@@ -25,3 +25,24 @@ test('unsupported live verification makes no upstream calls',async()=>{
  const original=global.fetch;let calls=0;global.fetch=async()=>{calls++;throw new Error('must not call upstream');};
  try{await assert.rejects(discover({taste:[],moment:'Quiet now?',areaId:'tokyo',radiusM:5000,excludeIds:[],locale:'en',challenge:{targetId:'fixture',text:'Is it quiet now?',condition:'conditionAtmosphere',previousQuestions:[]}}),(e:ServiceError)=>e.code==='CONDITION_UNVERIFIABLE');assert.equal(calls,0);}finally{global.fetch=original;}
 });
+
+import {resolveArea} from '../src/lib/geo';
+import {readSaved} from '../src/lib/saved';
+test('arbitrary coordinates validate and survive legacy saved search restoration',()=>{
+ const id='nearby:22.319300,114.169400';assert.equal(resolveArea(id)?.lat,22.3193);
+ for(const invalid of ['nearby:91,0','nearby:0,181','nearby:NaN,0','unknown','nearby:1,2junk'])assert.equal(resolveArea(invalid),null);
+ const restored=readSaved(JSON.stringify([{id:'saved',at:'2026-11-04',moment:'Read nearby',taste:[],areaId:id,radiusM:5000}]));assert.equal(restored[0]?.areaId,id);
+});
+
+import {prioritizeRequestedCategory} from '../src/lib/proposal-order';
+test('explicit primary category takes priority without inventing suitability or mutating Qloo order',()=>{
+ const mixed={id:'mixed',category:'Live music venue',unknowns:['quietness'],checks:{categories:['Cafe']}} as any;
+ const cafe={id:'cafe',category:'Café',unknowns:['quietness']} as any;
+ const other={id:'other',category:'Clothing store'} as any;
+ const input=[mixed,cafe,other];
+ assert.deepEqual(prioritizeRequestedCategory(input,['Cafe']).map(p=>p.id),['cafe','mixed','other']);
+ assert.deepEqual(input.map(p=>p.id),['mixed','cafe','other']);
+ assert.deepEqual(prioritizeRequestedCategory(input,[]),input);
+ assert.equal(prioritizeRequestedCategory(input,['Cafe'])[0],cafe);
+ assert.deepEqual(cafe.unknowns,['quietness']);
+});

@@ -1,0 +1,69 @@
+/* Mobile workspace: stable hit targets, no pointer-following surface on touch. */
+@media (max-width: 760px) {
+ .living-app .living-header{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;gap:12px 8px!important;padding:16px!important;align-items:center}
+ .living-header .brand,.living-header .wordmark{width:112px!important;height:28px!important}
+ .living-header>.living-slogan{grid-column:2!important;grid-row:1!important;font-size:13px!important;line-height:1.4;max-width:190px;min-width:0;border:0;padding:0!important;margin:0;white-space:normal}
+ .mobile-slogan-break{display:block}.desktop-slogan-space{display:none}
+ .living-header>.language-switch{grid-column:1!important;grid-row:2!important;display:flex!important;flex-wrap:nowrap!important;width:auto!important;max-width:none;gap:0;margin:0!important}
+ .living-header .language-switch button{font-size:13px!important;padding:6px!important;min-height:44px;white-space:nowrap}
+ .living-header>.appearance-options{grid-column:2!important;grid-row:2!important;justify-self:end;margin:0!important;padding:0;gap:0;flex-wrap:nowrap}
+ .living-header .appearance-options button{width:44px;height:44px;min-height:44px}
+ .living-app .living-main{padding:16px 16px calc(112px + env(safe-area-inset-bottom, 0px))}
+ .living-app .living-nav{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:8px 8px calc(8px + env(safe-area-inset-bottom, 0px))!important;margin:0!important;overflow:visible;position:fixed;inset:auto 0 0;z-index:50;background:var(--studio-surface);border-top:1px solid var(--studio-line)}
+ .living-app .living-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;min-width:0;min-height:64px;padding:6px!important;font-size:13px!important;line-height:1.35;text-align:center;white-space:normal;border-radius:8px}
+ .living-app .living-nav button span{flex-shrink:0;margin-left:0;padding:2px 4px;min-width:20px;font-size:12px}
+ .entry-workspace{grid-template-rows:112px auto auto;padding-top:0}
+ .entry-workspace .scene-heading{top:24px;left:16px;right:16px;max-width:none}
+ .entry-workspace .scene-heading h1{font-size:26px!important;line-height:1.25;text-wrap:pretty}
+ .entry-workspace>.living-composer{margin:0 12px 16px!important;width:auto!important;display:flex;flex-direction:column;padding:16px;gap:12px}
+ .entry-workspace>.living-composer>label{font-size:16px;line-height:1.4}
+ .entry-workspace>.living-composer>textarea{font-size:16px!important;line-height:1.55;min-height:96px;height:96px;padding:8px 0}
+ .entry-workspace .composer-bottom{display:flex;flex-direction:column;gap:12px;padding:0;align-items:stretch}
+ .entry-workspace .boundaries{gap:8px}
+ .entry-workspace .boundaries select{font-size:15px;min-height:44px}
+ .entry-workspace .area-picker-controls{gap:4px}
+ .entry-workspace .area-picker-controls button{font-size:14px;min-height:44px}
+ .entry-workspace .primary{width:100%;min-height:48px;font-size:16px}
+ .entry-workspace .moment-example{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+ .entry-workspace .moment-example>p{min-width:0;font-size:14px;line-height:1.5}
+}
+
+@media (hover: none) and (pointer: coarse) {
+ .culture-cover { transform: none !important; }
+ .living-nav button:active { background: var(--studio-raised); }
+}
+@media (max-width: 380px) {
+ .living-header .language-switch button { padding-inline: 4px !important; font-size: 12px !important; }
+ .living-header > .living-slogan { max-width: 170px; }
+}
+
+/* One shared indicator follows the target measured by usePointerFeedback. */
+.living-app .living-nav::after {
+ content: "";
+ border-radius: 999px;
+ background: var(--studio-raised);
+}
+.living-app .living-nav button,
+.living-app .living-nav button[aria-current="page"] {
+ border-radius: 999px;
+ background: transparent;
+}
+@media (max-width: 760px) {
+ .living-app .living-nav button {
+  flex-direction: row;
+  min-height: 48px;
+ }
+}
+
+/* The title sizes its own grid row, including when a translation wraps. */
+.living-app .entry-workspace {
+ grid-template-rows: auto auto auto;
+}
+.entry-workspace > .scene-heading {
+ grid-area: 1 / 1;
+ position: relative;
+ inset: auto;
+ margin: 0;
+ max-width: none;
+ padding: clamp(20px, 2.5vw, 34px) clamp(16px, 2vw, 32px) 24px;
+}

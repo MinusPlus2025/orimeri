@@ -384,3 +384,104 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 @media(max-width:600px){.revision-pair{gap:10px}.revision-pair article{padding:12px}.revision-pair h4{font-size:16px}}
 
 .revision-photo{height:100px;position:relative;overflow:hidden;margin:12px 0}.revision-photo .image-unavailable{height:100px}.revision-photo img{margin:0}.revision-pair{align-items:start}.revision-pair article{height:auto}
+
+.area-picker{min-width:0;max-width:100%}.area-picker-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.area-picker select{max-width:100%;min-width:0}.area-picker button{min-height:44px;gap:8px}.location-confirm{padding:12px 0;border-top:1px solid var(--studio-line);margin-top:8px}.location-confirm p,.area-picker>p{font-size:14px;line-height:1.5;max-width:40ch;overflow-wrap:anywhere}.location-confirm>div{display:flex;gap:16px;flex-wrap:wrap}
+@media(max-width:600px){.boundaries{flex-wrap:wrap}.area-picker{flex:1 1 100%}.area-picker-controls{justify-content:space-between}.area-picker-controls select{max-width:calc(100% - 110px)}}
+.living-composer .boundaries{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:12px;width:100%}.living-composer .boundaries>svg{display:none}.living-composer .boundaries>#radius{grid-column:2;grid-row:1;max-width:none}.living-composer .area-picker{grid-column:1;grid-row:1}.living-composer .area-picker-controls{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:4px 12px}.living-composer .area-picker-controls select{max-width:100%;width:100%;overflow:hidden;text-overflow:ellipsis}.living-composer .area-picker-controls button{padding:4px 8px}.living-composer .area-picker-controls select:focus-visible{outline-offset:-2px}
+
+/* Progressive disclosure: proposal first, supporting checks on demand. */
+.shared-proposal .discovery-understanding{gap:32px;padding:24px 0}
+.shared-proposal .cultural-rationale,.shared-proposal .uncertainty-area{min-width:0;border:0}
+.shared-proposal .discovery-understanding h2{font-size:22px;font-weight:650;line-height:1.3;margin:0 0 16px}
+.shared-proposal .proposal-checks{margin:0;border-bottom:1px solid var(--studio-line)}
+.shared-proposal .proposal-checks summary,.shared-proposal .agent-reading summary,.shared-proposal .source-evidence summary{min-height:48px;padding:14px 0;font-size:16px;font-weight:550;cursor:pointer;color:var(--studio-ink)}
+.shared-proposal .proposal-checks dl{padding:12px 0}
+.shared-proposal .agent-reading,.shared-proposal .source-evidence{margin:0;border-bottom:1px solid var(--studio-line)}
+.shared-proposal .fact-controls{margin:8px 0}
+.shared-proposal .fact-controls button{border:0;background:transparent;padding:12px 0;min-height:44px;font-size:16px}
+.shared-proposal .uncertainty-area>p{font-size:15px;line-height:1.6;margin:0 0 16px}
+.shared-proposal .uncertain-claims{display:flex;flex-wrap:wrap;gap:10px}
+.shared-proposal .uncertain-claims button{font-size:15px;padding:12px 14px;border-radius:8px;min-height:44px}
+.shared-proposal .proposal-actions button small{font-size:14px;line-height:1.4;font-weight:400}
+.shared-proposal .proposal-actions button strong{font-size:20px;line-height:1.35;font-weight:650}
+.shared-proposal .proposal-actions .evidence-action{font-size:15px;margin-top:12px}
+.entry-workspace .taste-prerequisite{padding:0 0 10px;border-bottom:1px solid var(--studio-line)}
+.entry-workspace .taste-prerequisite p{font-size:14px;line-height:1.5}
+.entry-workspace .taste-prerequisite button{font-size:14px}
+@media(max-width:600px){
+.shared-proposal .discovery-understanding{gap:24px;padding:20px 0}
+.shared-proposal .proposal-actions button strong{font-size:18px}
+.entry-workspace .taste-prerequisite{gap:4px;align-items:flex-start}
+.entry-workspace .taste-prerequisite p{flex:1 1 100%}
+}
+
+/* Secondary category matches belong beside the actionable category, not in hidden details. */
+.shared-proposal .category-context{display:grid;gap:6px;font-size:14px;line-height:1.5;font-weight:400;color:var(--studio-muted);text-align:start}
+.shared-proposal .category-context>span:first-child{color:var(--studio-ink);font-weight:500}
+
+/* Reading order: intention, proposal, then the specific claim under review. */
+.entry-workspace .scene-heading h1 {
+ max-inline-size: 22ch;
+ font-size: clamp(2rem, 3vw, 2.625rem);
+ font-weight: 650;
+ line-height: 1.14;
+}
+.entry-workspace .living-composer .moment-example {
+ color: var(--studio-muted);
+ font-size: .9375rem;
+}
+.shared-proposal .proposal-actions .unverified-action {
+ border-inline-start: 3px solid var(--studio-warning);
+ background: color-mix(in srgb, var(--studio-warning) 6%, var(--studio-surface));
+}
+.shared-proposal .proposal-actions .unverified-action small {
+ color: var(--studio-warning);
+ font-weight: 650;
+}
+.shared-proposal .contextual-question .question-heading > p {
+ margin: 0 0 .45rem;
+ color: var(--studio-muted);
+ font-size: .9375rem;
+}
+.shared-proposal .contextual-question .question-heading > h2 {
+ margin: 0;
+ color: var(--studio-ink);
+ font-size: clamp(1.35rem, 2vw, 1.75rem);
+ font-weight: 650;
+ line-height: 1.25;
+}
+.shared-proposal .proposal-actions button[aria-expanded="true"] {
+ background: var(--studio-raised);
+ border-color: var(--studio-accent);
+}
+
+.taste-workspace .culture-collection { padding-block: clamp(16px,3vw,36px); }
+.taste-workspace .collection-heading h1 { margin:0; font-size:clamp(26px,3vw,38px); line-height:1.2; }
+.taste-workspace .culture-objects { margin-block:20px; }
+
+/* Shared frame for posters, portraits, brand marks and the add control. */
+.taste-workspace .culture-objects {
+ display: grid;
+ grid-template-columns: repeat(auto-fill, minmax(min(100%, 145px), 1fr));
+ gap: 20px 16px;
+ align-items: start;
+}
+.taste-workspace .culture-object,
+.taste-workspace .culture-select {
+ display: block;
+ min-width: 0;
+ width: 100%;
+}
+.taste-workspace .culture-cover,
+.taste-workspace .collection-add {
+ box-sizing: border-box;
+ width: 100%;
+ height: auto;
+ min-height: 0;
+ aspect-ratio: 1;
+}
+.taste-workspace .culture-select > strong {
+ margin: 8px 0 4px;
+ line-height: 1.4;
+ min-height: 2.8em;
+}
