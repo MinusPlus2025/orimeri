@@ -90,3 +90,8 @@
  .entry-workspace > .living-composer { width:min(calc(100% - 64px),54rem);margin-inline-start:32px; }
  .entry-workspace .moment-taste-items { flex-wrap:wrap; }
 }
+
+.proposal-switcher {display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;color:var(--studio-muted);font-size:15px;font-variant-numeric:tabular-nums}
+.proposal-switcher > div {display:flex;gap:6px}
+.proposal-switcher button {height:44px;width:44px;border:1px solid var(--studio-line);border-radius:50%;background:var(--studio-surface);color:var(--studio-ink);font-size:20px}
+.proposal-switcher button:disabled {opacity:.45}
