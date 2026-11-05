@@ -95,3 +95,17 @@
 .proposal-switcher > div {display:flex;gap:6px}
 .proposal-switcher button {height:44px;width:44px;border:1px solid var(--studio-line);border-radius:50%;background:var(--studio-surface);color:var(--studio-ink);font-size:20px}
 .proposal-switcher button:disabled {opacity:.45}
+
+/* The scene asks one question. The solid writing surface is its answer. */
+.entry-workspace > .living-composer > #moment {
+ box-sizing:border-box;width:100%;min-height:5rem;padding:14px 16px;
+ border:1px solid var(--studio-line);border-radius:10px;
+ background:var(--studio-surface);color:var(--studio-ink);
+ font-size:clamp(17px,1.3vw,20px);line-height:1.5;
+}
+.entry-workspace > .living-composer > #moment:focus {
+ outline:2px solid var(--studio-accent);outline-offset:-2px;
+}
+.entry-workspace .moment-example {display:flex;justify-content:flex-start;border:0}
+.entry-workspace .moment-example button {min-height:44px;padding:4px 0;font-size:14px}
+.entry-workspace .scene-heading label {cursor:text}
