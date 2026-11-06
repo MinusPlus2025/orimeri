@@ -109,3 +109,9 @@
 .entry-workspace .moment-example {display:flex;justify-content:flex-start;border:0}
 .entry-workspace .moment-example button {min-height:44px;padding:4px 0;font-size:14px}
 .entry-workspace .scene-heading label {cursor:text}
+
+.entry-workspace .moment-basis {display:inline-flex;align-self:flex-start;align-items:center;gap:8px;min-height:44px;padding:4px 0;color:var(--studio-ink);background:transparent;border:0;font-size:15px}
+.basis-images {display:inline-flex;align-items:center}
+.basis-images img {width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--studio-surface)}
+.basis-images img+img {margin-inline-start:-9px}
+.basis-images:empty {display:none}

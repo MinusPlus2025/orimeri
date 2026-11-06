@@ -10,7 +10,7 @@ for(const width of [1440,390])test(`taste navigation and editor at ${width}`,asy
  await expect(page.locator('#taste-query')).toBeVisible();await expect(page.locator('#moment')).toBeHidden();
  await page.locator('.collection-heading button').click();
  await expect(page.locator('#taste-query')).toHaveCount(0);
- await page.locator('.collection-add').click();await expect(page.locator('#taste-query')).toBeFocused();
+ await expect(page.locator('#taste-collection')).toHaveCount(0);await page.locator('.moment-basis').click();await page.locator('.collection-add').click();await expect(page.locator('#taste-query')).toBeFocused();
  await expect(page.locator('#moment')).toHaveValue('Keep this request');
  for(const language of ['简体中文','日本語','English']){await page.getByRole('button',{name:language,exact:true}).click();await expect(page.locator('#moment')).toHaveValue('Keep this request');}
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);

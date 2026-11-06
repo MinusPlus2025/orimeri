@@ -2,12 +2,12 @@ import {test,expect} from '@playwright/test';
 test.skip(!process.env.RUN_LIVE,'Requires live Qloo and language-service credentials on the server.');
 for(const mobile of [false,true])test(`${mobile?'mobile':'desktop'} live investigation and language preservation`,async({page})=>{
  await page.setViewportSize(mobile?{width:390,height:844}:{width:1440,height:1000});
- await page.goto('/');
+ await page.goto('/');await page.locator('.living-nav button').nth(1).click();
  await page.getByTestId('use-example').click();await expect(page.getByTestId('taste-count')).toHaveText('1/6',{timeout:30000});
  await page.getByRole('button',{name:'Deselect Brian Eno',exact:true}).click();await expect(page.getByTestId('taste-count')).toHaveText('0/6');await page.getByRole('button',{name:'Select Brian Eno',exact:true}).click();await expect(page.getByTestId('taste-count')).toHaveText('1/6');
  await page.getByRole('button',{name:'Details Brian Eno',exact:true}).click();await expect(page.locator('.culture-detail')).toContainText('1B088E28-0668-4670-A97B-87865A1FCBCF');await page.locator('.culture-detail').getByRole('button',{name:'Close'}).click();
- await page.locator('.collection-heading button').click();await page.getByRole('button',{name:'Remove Brian Eno',exact:true}).click();await expect(page.getByTestId('taste-count')).toHaveText('0/6');await page.getByTestId('use-example').click();await expect(page.getByTestId('taste-count')).toHaveText('1/6');
- await page.locator('#moment').fill('A quiet cafe to read for an hour.');
+ await page.getByRole('button',{name:'Remove Brian Eno',exact:true}).click();await expect(page.getByTestId('taste-count')).toHaveText('0/6');await page.getByTestId('use-example').click();await expect(page.getByTestId('taste-count')).toHaveText('1/6');
+ await page.locator('.living-nav button').first().click();await page.locator('#moment').fill('A quiet cafe to read for an hour.');
  await page.screenshot({path:`artifacts/${mobile?'mobile':'desktop'}-entry.png`,fullPage:true});
  const original=await page.locator('#moment').inputValue();
  for(const [lang,label]of [['简体中文','寻找地点'],['日本語','場所を探す'],['English','Find places']]){
