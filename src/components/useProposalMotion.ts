@@ -12,7 +12,7 @@ export function useProposalMotion(){
   const intent=document.querySelector<HTMLTextAreaElement>('#moment');
   const intentRect=kind==='arrive'?intent?.getBoundingClientRect():undefined;
   const intentText=intent?.value;
-  const collectionImages=kind==='arrive'?Array.from(document.querySelectorAll<HTMLImageElement>('.culture-object.selected .culture-cover img')).map(img=>({src:img.src,alt:img.alt,rect:img.getBoundingClientRect()})):[];
+  const collectionImages=kind==='arrive'?Array.from(document.querySelectorAll<HTMLImageElement>('.decision-object-toggle[aria-pressed="true"] img, .culture-object.selected .culture-cover img')).map(img=>({src:img.src,alt:img.alt,rect:img.getBoundingClientRect()})):[];
   let root=document.querySelector('.shared-proposal');
   const oldHero=root?.querySelector<HTMLElement>('.place-photograph');
   const oldRect=oldHero?.getBoundingClientRect();const oldImage=oldHero?.querySelector('img')?.src;

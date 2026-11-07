@@ -13,7 +13,7 @@ for(const width of [360,390,756])test(`mobile navigation and composition ${width
  await page.waitForTimeout(400); // Capture the settled theme, not the color transition.
  await expect(page.locator('#moment')).toHaveValue('Read for an hour. No bars tonight.');
  expect(await page.locator('.living-nav').evaluate(el=>getComputedStyle(el,'::after').borderRadius)).toBe('999px');
- const title=(await page.locator('.scene-heading').boundingBox())!,form=(await page.locator('.living-composer').boundingBox())!;
+ const title=(await page.locator('.decision-heading').boundingBox())!,form=(await page.locator('.living-composer').boundingBox())!;
  await expect(page.locator('.scene-credit')).toHaveCount(0);expect(title.y+title.height).toBeLessThanOrEqual(form.y);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  const nav=(await page.locator('.living-nav').boundingBox())!;

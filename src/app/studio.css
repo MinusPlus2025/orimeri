@@ -233,7 +233,9 @@ body,.living-app{background:var(--studio-bg);color:var(--studio-ink);font-family
 
 .shared-proposal .place-photograph:has(>.image-unavailable){height:auto;min-height:0;background:var(--studio-surface);padding:24px}
 .shared-proposal .place-photograph:has(>.image-unavailable)::after{display:none}
-.shared-proposal .place-photograph>.image-unavailable{display:none}
+.shared-proposal .place-photograph>.image-unavailable{display:block;height:auto;min-height:0;padding:0 0 12px;background:none;color:var(--studio-muted)}
+.shared-proposal .place-photograph>.image-unavailable strong{display:none}
+.shared-proposal .place-photograph>.image-unavailable small{font-size:14px;line-height:1.5;color:var(--studio-ink)}
 .shared-proposal .place-photograph:has(>.image-unavailable) .photograph-caption{position:relative;inset:auto;padding:0!important;background:none;color:var(--studio-ink);text-shadow:none}
 .shared-proposal .place-photograph:has(>.image-unavailable) .photograph-caption h1,.shared-proposal .place-photograph:has(>.image-unavailable) .photograph-caption p{color:var(--studio-ink);text-shadow:none}
 
